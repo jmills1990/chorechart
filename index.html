@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⭐ Chore Charts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 45%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      text-align: center;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 7vw, 3rem);
+      color: #fff;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-shadow: 0 2px 20px rgba(168,85,247,0.6);
+    }
+
+    .subtitle {
+      color: #a0aec0;
+      font-size: 1rem;
+      margin-bottom: 48px;
+    }
+
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    @media (min-width: 460px) {
+      .cards { flex-direction: row; }
+    }
+
+    .card {
+      flex: 1;
+      text-decoration: none;
+      border-radius: 24px;
+      padding: 36px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+
+    .card:active { transform: scale(0.97); }
+
+    .card-addie {
+      background: linear-gradient(145deg, #831843, #be185d);
+    }
+
+    .card-charlotte {
+      background: linear-gradient(145deg, #042f2e, #0f766e);
+    }
+
+    .card-emoji {
+      font-size: 3.2rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+    }
+
+    .card-name {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+
+    .card-label {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⭐ Chore Charts ⭐</h1>
+    <p class="subtitle">Whose chart would you like to see?</p>
+    <div class="cards">
+      <a href="addie.html" class="card card-addie">
+        <div class="card-emoji">🌸</div>
+        <div class="card-name">Addie</div>
+        <div class="card-label">View Addie's chart</div>
+      </a>
+      <a href="charlotte.html" class="card card-charlotte">
+        <div class="card-emoji">🌿</div>
+        <div class="card-name">Charlotte</div>
+        <div class="card-label">View Charlotte's chart</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

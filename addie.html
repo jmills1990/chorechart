@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌸 Addie's Chore Chart</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(160deg, #2d0a1f 0%, #4a0e2e 45%, #831843 100%);
+      min-height: 100vh;
+      padding: 24px 16px 56px;
+    }
+
+    .card {
+      max-width: 880px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px 28px 36px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+      position: relative;
+    }
+    .cog-btn { position: absolute; top: 18px; right: 22px; background: none; border: none; font-size: 1.35rem; cursor: pointer; opacity: 0.35; transition: opacity 0.2s, transform 0.35s; line-height: 1; padding: 4px; }
+    .cog-btn:hover { opacity: 1; transform: rotate(60deg); }
+
+    h1 { text-align: center; font-size: clamp(1.6rem, 5vw, 2.4rem); color: #be185d; letter-spacing: 1px; margin-bottom: 4px; }
+
+    .week-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; }
+    .week-range { text-align: center; color: #666; font-size: 0.92rem; min-width: 220px; }
+
+    .nav-btn {
+      background: #be185d; color: #fff; border: none; border-radius: 10px;
+      padding: 7px 16px; font-size: 0.88rem; font-family: inherit; font-weight: 600;
+      cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap;
+    }
+    .nav-btn:hover  { background: #9d174d; transform: scale(1.04); }
+    .nav-btn:active { transform: scale(0.97); }
+    #btn-today { background: #f59e0b; display: none; }
+    #btn-today:hover { background: #d97706; }
+
+    .progress-wrap { margin-bottom: 28px; }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 0.85rem; color: #777; margin-bottom: 6px; }
+    .progress-track { height: 15px; background: #fce7f3; border-radius: 999px; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, #f472b6, #ec4899, #f97316); border-radius: 999px; transition: width 0.6s cubic-bezier(.34,1.56,.64,1); }
+
+    .table-scroll { overflow-x: auto; margin-bottom: 28px; border-radius: 14px; box-shadow: 0 2px 14px rgba(190,24,93,0.1); }
+    table { width: 100%; border-collapse: collapse; min-width: 580px; }
+
+    thead th { background: #be185d; color: #fff; padding: 12px 8px; text-align: center; font-size: 0.8rem; font-weight: 600; line-height: 1.4; }
+    thead th:first-child { text-align: left; padding-left: 18px; border-radius: 14px 0 0 0; min-width: 175px; }
+    thead th:last-child { border-radius: 0 14px 0 0; }
+    thead th.today-header { background: #f59e0b; }
+
+    tbody td { border-bottom: 1px solid #fce7f3; padding: 8px; text-align: center; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody td:first-child { text-align: left; padding-left: 18px; font-size: 0.93rem; font-weight: 600; color: #333; background: #fff5f7; }
+    tbody tr:nth-child(even) td            { background: #fafafa; }
+    tbody tr:nth-child(even) td:first-child { background: #fce7f3; }
+    tbody tr:last-child td:first-child { border-radius: 0 0 0 14px; }
+    tbody tr:last-child td:last-child  { border-radius: 0 0 14px 0; }
+    td.today-cell { background: #fffbeb !important; }
+
+    .chore-label-cell { display: flex; align-items: center; gap: 4px; }
+    .chore-name { flex: 1; font-size: 0.93rem; font-weight: 600; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chore-name-empty { color: #f9a8d4; font-weight: 400; font-style: italic; }
+    .chore-edit-btn { flex-shrink: 0; background: none; border: none; cursor: pointer; font-size: 0.8rem; line-height: 1; padding: 2px 4px; border-radius: 4px; opacity: 0.35; transition: opacity 0.15s, background 0.15s; }
+    .chore-edit-btn:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+    .chore-delete-btn { flex-shrink: 0; background: none; border: none; cursor: pointer; color: #fbcfe8; font-size: 0.95rem; line-height: 1; padding: 2px 5px; border-radius: 5px; transition: color 0.15s, background 0.15s; }
+    .chore-delete-btn:hover { color: #dc2626; background: #fff0f0; }
+    .add-chore-btn { display: block; margin: -8px auto 20px; background: none; border: 2px dashed #fbcfe8; border-radius: 10px; color: #be185d; font-size: 0.88rem; font-family: inherit; font-weight: 600; padding: 8px 22px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .add-chore-btn:hover { background: #fff5f7; border-color: #f472b6; }
+
+    .cb-wrap { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .cb-wrap input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
+    .cb-box { width: 32px; height: 32px; border: 2.5px solid #fbcfe8; border-radius: 9px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 17px; line-height: 1; transition: border-color 0.18s, background 0.18s, transform 0.18s; user-select: none; }
+    .cb-wrap input:checked + .cb-box { background: #be185d; border-color: #be185d; animation: pop 0.3s cubic-bezier(.34,1.56,.64,1); }
+    .cb-wrap:hover .cb-box { border-color: #f472b6; transform: scale(1.12); }
+
+    @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+    .goal-box { background: linear-gradient(135deg, #fff8ed, #ffecd2); border-radius: 16px; padding: 24px; border: 2px solid #fed7aa; margin-bottom: 16px; }
+    .goal-title-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .goal-title-row h2 { color: #c2410c; font-size: 1.15rem; margin-bottom:0; }
+    .goal-add-btn { background:none; border:2px solid #fdba74; border-radius:8px; color:#c2410c; font-size:1.1rem; font-weight:700; line-height:1; padding:2px 9px; cursor:pointer; opacity:0.6; transition:opacity 0.15s,background 0.15s; }
+    .goal-add-btn:hover { opacity:1; background:#fff0dc; }
+    .goal-display { min-height:36px; display:flex; flex-direction:column; gap:2px; }
+    .goal-item { display:flex; align-items:center; gap:6px; padding:3px 0; }
+    .goal-item-text { flex:1; font-size:0.97rem; color:#333; word-break:break-word; }
+    .goal-bullet { color:#f97316; font-size:1rem; flex-shrink:0; }
+    .goal-edit-btn { flex-shrink:0; background:none; border:none; font-size:1rem; cursor:pointer; opacity:0.4; transition:opacity 0.2s,transform 0.2s; padding:3px 5px; border-radius:6px; line-height:1; }
+    .goal-edit-btn:hover { opacity:1; transform:scale(1.2); background:rgba(0,0,0,0.06); }
+    .goal-empty { color:#ccc; font-style:italic; font-size:0.92rem; }
+    .emoji-picker { display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 2px; max-height:116px; overflow-y:auto; }
+    .emoji-btn { background:none; border:1px solid #f0f0f0; border-radius:6px; font-size:1.25rem; cursor:pointer; padding:3px 5px; line-height:1.3; transition:background 0.12s,transform 0.1s; }
+    .emoji-btn:hover { background:#f5f5f5; transform:scale(1.2); }
+    .goal-remove-btn { padding:9px 16px; background:none; border:2px solid #fca5a5; border-radius:9px; color:#dc2626; font-size:0.88rem; font-family:inherit; font-weight:600; cursor:pointer; transition:background 0.15s; }
+    .goal-remove-btn:hover { background:#fef2f2; }
+
+    #all-done { display: none; text-align: center; font-size: 1.4rem; font-weight: 800; color: #be185d; padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #fce7f3, #fdf4ff); border: 2px solid #f9a8d4; margin-bottom: 16px; animation: bounce-in 0.5s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes bounce-in { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 10001; padding: 16px; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 28px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+    .modal-box h3 { font-size: 1.2rem; color: #be185d; margin-bottom: 10px; }
+    .modal-desc { font-size: 0.88rem; color: #666; margin-bottom: 18px; line-height: 1.5; }
+    .modal-desc a { color: #be185d; }
+    .modal-label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 5px; }
+    .modal-label small { font-weight: 400; color: #999; margin-left: 4px; }
+    .modal-input { width: 100%; padding: 9px 12px; border: 2px solid #fbcfe8; border-radius: 9px; font-size: 0.92rem; font-family: inherit; color: #333; outline: none; margin-bottom: 14px; transition: border-color 0.2s; }
+    .modal-input:focus { border-color: #be185d; }
+    .modal-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .modal-row .modal-input { margin-bottom: 0; flex: 1; }
+    .modal-create-btn { padding: 9px 14px; background: #fce7f3; border: 2px solid #fbcfe8; border-radius: 9px; font-size: 0.82rem; font-family: inherit; font-weight: 600; color: #be185d; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .modal-create-btn:hover { background: #fbcfe8; }
+    .modal-msg { font-size: 0.83rem; min-height: 1.2em; margin-bottom: 4px; color: #666; }
+    .modal-msg.success { color: #16a34a; }
+    .modal-msg.error   { color: #dc2626; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+    .modal-cancel-btn { padding: 9px 18px; background: none; border: 2px solid #fbcfe8; border-radius: 9px; font-size: 0.88rem; font-family: inherit; color: #666; cursor: pointer; }
+    .modal-cancel-btn:hover { background: #fff5f7; }
+    .modal-save-btn { padding: 9px 22px; background: #be185d; border: none; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; }
+    .modal-save-btn:hover { background: #9d174d; }
+
+    #fx { position: fixed; inset: 0; pointer-events: none; z-index: 9998; overflow: hidden; }
+    @keyframes confetti-fall { to { transform: translateY(110vh) rotate(800deg); opacity: 0; } }
+    @keyframes lep-wave { 0%, 100% { transform: scale(1) rotate(-10deg); } 50% { transform: scale(1.1) rotate(10deg); } }
+  </style>
+</head>
+<body>
+  <div id="fx"></div>
+  <div class="card">
+    <button class="cog-btn" id="settings-btn" title="Sync Settings">⚙️</button>
+    <h1>🌸 Addie's Chore Chart 🌸</h1>
+    <div class="week-nav">
+      <button class="nav-btn" id="btn-prev">← Prev</button>
+      <p class="week-range" id="week-range"></p>
+      <button class="nav-btn" id="btn-today">Today</button>
+      <button class="nav-btn" id="btn-next">Next →</button>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-labels"><span>Weekly Progress</span><span id="prog-text">0 / 42</span></div>
+      <div class="progress-track"><div class="progress-bar" id="prog-bar"></div></div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr id="header-row"><th>Chore</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <button class="add-chore-btn" id="add-chore-btn">+ Add Chore</button>
+    <div class="goal-box">
+      <div class="goal-title-row">
+        <h2>🎯 Addie's Goal This Week</h2>
+        <button class="goal-add-btn" id="goal-add-btn" title="Set goal">+</button>
+      </div>
+      <div class="goal-display" id="goal-display"></div>
+    </div>
+    <div id="all-done">🎉 Amazing Addie! Every chore done this week! 🎉</div>
+  </div>
+
+  <div id="settings-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h3>☁️ Cloud Sync Setup</h3>
+      <p class="modal-desc">Sync across devices for free with <a href="https://jsonbin.io" target="_blank" rel="noopener">JSONBin.io</a>. Create a free account → create an <strong>Access Key</strong> (not Master Key) scoped to read/write → paste below. Then click <strong>Auto-Create Bin</strong> and save the Bin ID to enter on other devices.</p>
+      <label class="modal-label">JSONBin Access Key <small>(not Master Key)</small></label>
+      <input id="s-key" type="password" class="modal-input" placeholder="$2a$10$…">
+      <label class="modal-label">Bin ID <small>(auto-create once, write it down for other devices)</small></label>
+      <div class="modal-row">
+        <input id="s-bin" type="text" class="modal-input" placeholder="e.g. 64abc1234567890…">
+        <button id="s-create-btn" class="modal-create-btn">Auto-Create</button>
+      </div>
+      <p id="s-msg" class="modal-msg"></p>
+      <div class="modal-actions">
+        <button id="s-cancel-btn" class="modal-cancel-btn">Cancel</button>
+        <button id="s-save-btn"   class="modal-save-btn">Save & Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="goal-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h3 id="goal-modal-title">🎯 Add Goal</h3>
+      <input id="goal-modal-input" type="text" class="modal-input" placeholder="What do you want to achieve?" maxlength="200">
+      <div class="emoji-picker" id="emoji-picker"></div>
+      <div class="modal-actions" style="justify-content:space-between">
+        <button id="goal-remove-btn" class="goal-remove-btn" style="display:none">Delete</button>
+        <div style="display:flex;gap:8px">
+          <button id="goal-cancel-btn" class="modal-cancel-btn">Cancel</button>
+          <button id="goal-save-btn" class="modal-save-btn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chore-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <h3>✏️ Edit Chore</h3>
+      <input id="chore-modal-input" type="text" class="modal-input" placeholder="Chore name…" maxlength="60">
+      <div class="emoji-picker" id="chore-emoji-picker"></div>
+      <div class="modal-actions" style="justify-content:space-between">
+        <button id="chore-delete-btn" class="goal-remove-btn">Delete</button>
+        <div style="display:flex;gap:8px">
+          <button id="chore-cancel-btn" class="modal-cancel-btn">Cancel</button>
+          <button id="chore-save-btn" class="modal-save-btn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PREFIX = 'addie_';
+
+    const DEFAULT_CHORES = [
+      { id: 'teeth',    label: '🦷 Brush Teeth' },
+      { id: 'school',   label: '🏫 On Time for School' },
+      { id: 'bedroom',  label: '🛏️ Clean Bedroom (10 min)' },
+      { id: 'reading',  label: '📚 Reading' },
+      { id: 'homework', label: '✏️ Homework' },
+      { id: 'misc',     label: '🧹 Misc Chore' },
+    ];
+    const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+    function getMondayFor(o) { const d=new Date(),day=d.getDay(); d.setDate(d.getDate()-(day===0?6:day-1)+o*7); d.setHours(0,0,0,0); return d; }
+    function weekKeyFor(m)   { return `${m.getFullYear()}_${m.getMonth()}_${m.getDate()}`; }
+    function weekDatesFor(m) { return Array.from({length:7},(_,i)=>{ const d=new Date(m); d.setDate(m.getDate()+i); return d; }); }
+    function getTodayIndex() { const d=new Date().getDay(); return d===0?6:d-1; }
+    function fmt(d)          { return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}); }
+
+    let personData = { checks: {}, goals: {}, chores: [] };
+    let weekOffset = 0, currentWK = '';
+
+    function getChecks() { return personData.checks[currentWK] || {}; }
+    function getGoals() {
+      const g=personData.goals[currentWK];
+      if (!g) return [];
+      if (typeof g==='string') return g ? [{id:'g_legacy',text:g}] : [];
+      return Array.isArray(g) ? g : [];
+    }
+    function addGoal(text)       { if(!Array.isArray(personData.goals[currentWK])) personData.goals[currentWK]=[]; personData.goals[currentWK].push({id:'g_'+Date.now(),text}); persistChanges(); }
+    function updateGoal(id,text) { const goals=getGoals(),g=goals.find(g=>g.id===id); if(g){g.text=text; personData.goals[currentWK]=goals; persistChanges();} }
+    function deleteGoal(id)      { personData.goals[currentWK]=getGoals().filter(g=>g.id!==id); persistChanges(); }
+    function getChores() { return personData.chores && personData.chores.length ? personData.chores : DEFAULT_CHORES; }
+
+    function setCheck(key,val) { if(!personData.checks[currentWK]) personData.checks[currentWK]={}; personData.checks[currentWK][key]=val; persistChanges(); }
+
+    function setChoreLabel(id,label) { const c=personData.chores.find(c=>c.id===id); if(c){c.label=label;persistChanges();} }
+    function deleteChore(id) { personData.chores=personData.chores.filter(c=>c.id!==id); persistChanges(); renderWeek(); }
+    function addChore() { const id='c_'+Date.now(); personData.chores.push({id,label:''}); persistChanges(); renderWeek(); setTimeout(()=>{ const ins=document.querySelectorAll('.chore-label-input'); if(ins.length) ins[ins.length-1].focus(); },50); }
+
+    function saveLocal()  { localStorage.setItem(PREFIX+'data', JSON.stringify(personData)); }
+    function loadLocal()  { try { return JSON.parse(localStorage.getItem(PREFIX+'data')||'{}'); } catch { return {}; } }
+
+    function getApiKey()  { return localStorage.getItem('jsonbin_key')||''; }
+    function getBinId()   { return localStorage.getItem(PREFIX+'bin_id')||''; }
+    function setApiKey(v) { localStorage.setItem('jsonbin_key',v); }
+    function setBinId(v)  { localStorage.setItem(PREFIX+'bin_id',v); }
+
+    const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
+
+    async function cloudLoad() {
+      if (!getApiKey()||!getBinId()) return null;
+      try { const r=await fetch(`${JSONBIN_BASE}/${getBinId()}/latest`,{headers:{'X-Master-Key':getApiKey(),'X-Bin-Meta':'false'}}); return r.ok?await r.json():null; }
+      catch { return null; }
+    }
+
+    let syncTimer=null;
+    function cloudSaveNow() {
+      if (!getApiKey()||!getBinId()) return;
+      setSyncState('saving');
+      return fetch(`${JSONBIN_BASE}/${getBinId()}`,{method:'PUT',headers:{'X-Master-Key':getApiKey(),'Content-Type':'application/json','X-Bin-Versioning':'false'},body:JSON.stringify(personData)})
+        .then(r=>setSyncState(r.ok?'saved':'error')).catch(()=>setSyncState('error'));
+    }
+
+    async function cloudCreateBin() {
+      if (!getApiKey()) return null;
+      try { const r=await fetch(JSONBIN_BASE,{method:'POST',headers:{'X-Master-Key':getApiKey(),'Content-Type':'application/json','X-Bin-Private':'true','X-Bin-Name':PREFIX+'chores'},body:JSON.stringify({checks:{},goals:{},chores:[]})}); if(!r.ok) return null; return (await r.json()).metadata.id; }
+      catch { return null; }
+    }
+
+    function setSyncState(s) {
+      const cog=document.getElementById('settings-btn'); if(!cog) return;
+      if (s==='saving') { cog.style.opacity='1'; cog.textContent='🔄'; }
+      else if (s==='saved') { cog.textContent='✅'; setTimeout(()=>{ cog.textContent='⚙️'; cog.style.opacity=''; },2000); }
+      else if (s==='error') { cog.textContent='❌'; setTimeout(()=>{ cog.textContent='⚙️'; cog.style.opacity=''; },3000); }
+    }
+
+    function updateSyncFooter() { /* no-op */ }
+
+    function persistChanges() { saveLocal(); if(!getApiKey()||!getBinId()) return; setSyncState('saving'); clearTimeout(syncTimer); syncTimer=setTimeout(cloudSaveNow,1400); }
+
+    async function init() {
+      const cloud=await cloudLoad();
+      if (cloud&&typeof cloud==='object') { personData={checks:{},goals:{},chores:[],...cloud}; saveLocal(); }
+      else { personData={checks:{},goals:{},chores:[],...loadLocal()}; }
+      if(!personData.chores||!personData.chores.length) personData.chores=DEFAULT_CHORES.map(c=>({...c}));
+      renderWeek(); updateSyncFooter();
+    }
+
+    function renderWeek() {
+      const mon=getMondayFor(weekOffset); currentWK=weekKeyFor(mon);
+      const dates=weekDatesFor(mon), todayIdx=weekOffset===0?getTodayIndex():-1;
+      document.getElementById('week-range').textContent=`Week of ${fmt(dates[0])} – ${fmt(dates[6])}`;
+      document.getElementById('btn-today').style.display=weekOffset!==0?'inline-block':'none';
+      const hr=document.getElementById('header-row');
+      while(hr.children.length>1) hr.removeChild(hr.lastChild);
+      dates.forEach((d,i)=>{ const th=document.createElement('th'); th.innerHTML=`${DAY_NAMES[i]}<br><small style="font-weight:400;opacity:.8">${fmt(d)}</small>`; if(i===todayIdx) th.classList.add('today-header'); hr.appendChild(th); });
+      const tbody=document.getElementById('tbody'); tbody.innerHTML='';
+      const wkChecks=getChecks();
+      getChores().forEach(chore=>{ const tr=document.createElement('tr'),labelTd=document.createElement('td');
+        const lc=document.createElement('div'); lc.className='chore-label-cell';
+        const nm=document.createElement('span'); nm.className='chore-name'+(chore.label?'':' chore-name-empty'); nm.textContent=chore.label||'New chore…';
+        const eb=document.createElement('button'); eb.className='chore-edit-btn'; eb.title='Edit'; eb.textContent='✏️'; eb.addEventListener('click',()=>openChoreModal(chore.id));
+        lc.appendChild(nm); lc.appendChild(eb); labelTd.appendChild(lc); tr.appendChild(labelTd);
+        for(let d=0;d<7;d++){ const td=document.createElement('td'); if(d===todayIdx) td.classList.add('today-cell'); const key=`${chore.id}_${d}`,lbl=document.createElement('label'); lbl.className='cb-wrap'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!wkChecks[key]; const box=document.createElement('span'); box.className='cb-box'; box.textContent=cb.checked?'⭐':''; cb.addEventListener('change',()=>{ const jc=cb.checked&&!getChecks()[key]; setCheck(key,cb.checked); box.textContent=cb.checked?'⭐':''; updateProgress(); if(jc) triggerFX(); }); lbl.appendChild(cb); lbl.appendChild(box); td.appendChild(lbl); tr.appendChild(td); }
+        tbody.appendChild(tr); });
+      updateGoalDisplay(); updateProgress();
+    }
+
+    const GOAL_EMOJIS = ['🎯','⭐','🌟','💪','🏆','🥇','🎉','🚀','📚','✏️','🧠','💡','🌈','🦋','🌸','🌺','🎨','🎵','⚽','🏃','🤸','🧘','🌱','🌿','🍀','🦁','🌞','❤️','💜','💙','💚','🙌','✅','🔥','💫','✨','😊','🏅','🌙','🎪'];
+
+    function updateGoalDisplay() {
+      const el=document.getElementById('goal-display'); el.innerHTML='';
+      const goals=getGoals();
+      if(!goals.length){ const s=document.createElement('span'); s.className='goal-empty'; s.textContent='No goals yet — tap + to add one'; el.appendChild(s); return; }
+      goals.forEach(g=>{
+        const row=document.createElement('div'); row.className='goal-item';
+        const bullet=document.createElement('span'); bullet.className='goal-bullet'; bullet.textContent='•';
+        const txt=document.createElement('span'); txt.className='goal-item-text'; txt.textContent=g.text;
+        const btn=document.createElement('button'); btn.className='goal-edit-btn'; btn.title='Edit'; btn.textContent='✏️'; btn.addEventListener('click',()=>openGoalModal(g.id));
+        row.appendChild(bullet); row.appendChild(txt); row.appendChild(btn); el.appendChild(row);
+      });
+    }
+
+    let editingGoalId=null;
+    function openGoalModal(id) {
+      editingGoalId=id||null;
+      const g=id?getGoals().find(g=>g.id===id):null;
+      document.getElementById('goal-modal-title').textContent=id?'✏️ Edit Goal':'🎯 Add Goal';
+      document.getElementById('goal-modal-input').value=g?g.text:'';
+      document.getElementById('goal-remove-btn').style.display=id?'inline-block':'none';
+      buildEmojiPicker('emoji-picker','goal-modal-input');
+      document.getElementById('goal-modal').style.display='flex';
+      setTimeout(()=>document.getElementById('goal-modal-input').focus(),50);
+    }
+    function closeGoalModal() { document.getElementById('goal-modal').style.display='none'; }
+
+    document.getElementById('goal-add-btn').addEventListener('click',()=>openGoalModal());
+    document.getElementById('goal-cancel-btn').addEventListener('click',closeGoalModal);
+    document.getElementById('goal-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('goal-modal')) closeGoalModal(); });
+    document.getElementById('goal-save-btn').addEventListener('click',()=>{ const text=document.getElementById('goal-modal-input').value.trim(); if(text){ if(editingGoalId) updateGoal(editingGoalId,text); else addGoal(text); updateGoalDisplay(); } closeGoalModal(); });
+    document.getElementById('goal-remove-btn').addEventListener('click',()=>{ if(editingGoalId) deleteGoal(editingGoalId); updateGoalDisplay(); closeGoalModal(); });
+
+    let editingChoreId=null;
+    function buildEmojiPicker(containerId, inputId) {
+      const picker=document.getElementById(containerId); picker.innerHTML='';
+      GOAL_EMOJIS.forEach(e=>{ const b=document.createElement('button'); b.className='emoji-btn'; b.textContent=e; b.addEventListener('click',()=>{ const inp=document.getElementById(inputId),s=inp.selectionStart,en=inp.selectionEnd; inp.value=inp.value.slice(0,s)+e+inp.value.slice(en); inp.setSelectionRange(s+e.length,s+e.length); inp.focus(); }); picker.appendChild(b); });
+    }
+    function openChoreModal(id) {
+      editingChoreId=id;
+      const chore=personData.chores.find(c=>c.id===id);
+      document.getElementById('chore-modal-input').value=chore?chore.label:'';
+      buildEmojiPicker('chore-emoji-picker','chore-modal-input');
+      document.getElementById('chore-modal').style.display='flex';
+      setTimeout(()=>document.getElementById('chore-modal-input').focus(),50);
+    }
+    function closeChoreModal() { document.getElementById('chore-modal').style.display='none'; }
+    document.getElementById('chore-cancel-btn').addEventListener('click',closeChoreModal);
+    document.getElementById('chore-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('chore-modal')) closeChoreModal(); });
+    document.getElementById('chore-save-btn').addEventListener('click',()=>{ if(editingChoreId){ setChoreLabel(editingChoreId,document.getElementById('chore-modal-input').value); renderWeek(); } closeChoreModal(); });
+    document.getElementById('chore-delete-btn').addEventListener('click',()=>{ if(editingChoreId){ deleteChore(editingChoreId); } closeChoreModal(); });
+
+    document.getElementById('btn-prev').addEventListener('click',()=>{ weekOffset--; renderWeek(); });
+    document.getElementById('btn-next').addEventListener('click',()=>{ weekOffset++; renderWeek(); });
+    document.getElementById('btn-today').addEventListener('click',()=>{ weekOffset=0; renderWeek(); });
+    document.getElementById('add-chore-btn').addEventListener('click',addChore);
+
+    function updateProgress() {
+      const total=getChores().length*7, done=Object.values(getChecks()).filter(Boolean).length, pct=total>0?(done/total)*100:0;
+      document.getElementById('prog-bar').style.width=pct+'%';
+      document.getElementById('prog-text').textContent=`${done} / ${total}`;
+      const b=document.getElementById('all-done');
+      if(total>0&&done===total){ b.style.display='block'; bigCelebration(); } else { b.style.display='none'; }
+    }
+
+    function openSettings()  { document.getElementById('s-key').value=getApiKey(); document.getElementById('s-bin').value=getBinId(); setModalMsg('',''); document.getElementById('settings-modal').style.display='flex'; }
+    function closeSettings() { document.getElementById('settings-modal').style.display='none'; }
+    function setModalMsg(t,c){ const e=document.getElementById('s-msg'); e.textContent=t; e.className='modal-msg '+c; }
+
+    document.getElementById('settings-btn').addEventListener('click',openSettings);
+    document.getElementById('s-cancel-btn').addEventListener('click',closeSettings);
+    document.getElementById('settings-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('settings-modal')) closeSettings(); });
+    document.getElementById('s-create-btn').addEventListener('click',async()=>{ const k=document.getElementById('s-key').value.trim(); if(!k){setModalMsg('Enter your Master Key first.','error');return;} setApiKey(k); setModalMsg('Creating bin…',''); const id=await cloudCreateBin(); if(id){document.getElementById('s-bin').value=id;setModalMsg('✅ Bin created! Write down the Bin ID to use on other devices.','success');}else{setModalMsg('❌ Failed — check your Master Key.','error');} });
+    document.getElementById('s-save-btn').addEventListener('click',async()=>{ const k=document.getElementById('s-key').value.trim(),b=document.getElementById('s-bin').value.trim(); if(!k||!b){setModalMsg('Both fields are required.','error');return;} setApiKey(k); setBinId(b); setModalMsg('Syncing…',''); await cloudSaveNow(); setModalMsg('✅ Saved! Data will now sync automatically.','success'); updateSyncFooter(); setTimeout(closeSettings,1400); });
+
+    let fxTick=0;
+    function triggerFX()      { const t=fxTick%3; fxTick++; if(t===0) confetti(45); else if(t===1) shootingStar(); else rainbow(); }
+    function bigCelebration() { confetti(130); setTimeout(rainbow,500); setTimeout(shootingStar,1100); setTimeout(()=>confetti(80),1800); }
+
+    function confetti(count) {
+      const fx=document.getElementById('fx'), colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff9ff3','#ffa502','#a29bfe','#fd79a8','#00cec9','#fdcb6e'];
+      for(let i=0;i<count;i++) setTimeout(()=>{ const el=document.createElement('div'),color=colors[Math.floor(Math.random()*colors.length)],size=Math.random()*10+6,left=Math.random()*100,dur=Math.random()*2+1.5,delay=Math.random()*0.8,shape=Math.random()>0.5?'50%':Math.random()>0.5?'3px':'0'; el.style.cssText=[`position:absolute`,`left:${left}%`,`top:-14px`,`width:${size}px`,`height:${size}px`,`background:${color}`,`border-radius:${shape}`,`opacity:1`,`animation:confetti-fall ${dur}s ${delay}s ease-in forwards`].join(';'); fx.appendChild(el); setTimeout(()=>el.remove(),(dur+delay+0.15)*1000); },Math.random()*700);
+    }
+
+    function rainbow() {
+      const NS='http://www.w3.org/2000/svg',VW=window.innerWidth,VH=window.innerHeight,svg=document.createElementNS(NS,'svg');
+      svg.setAttribute('viewBox',`0 0 ${VW} ${VH}`); svg.style.cssText=['position:fixed','inset:0',`width:${VW}px`,`height:${VH}px`,'pointer-events:none','z-index:9999','opacity:0','transition:opacity 0.6s ease'].join(';');
+      const bands=['#e40303','#ff8c00','#ffed00','#008026','#004dff','#750787'],cx=VW/2,cy=VH+VH*0.08,rMax=VW*0.62,bandW=rMax/bands.length*0.38;
+      bands.forEach((color,i)=>{ const r=rMax-i*(rMax/bands.length)*0.28,path=document.createElementNS(NS,'path'); path.setAttribute('d',`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`); path.setAttribute('stroke',color); path.setAttribute('stroke-width',String(Math.round(bandW))); path.setAttribute('fill','none'); path.setAttribute('stroke-opacity','0.92'); svg.appendChild(path); });
+      document.body.appendChild(svg);
+      const lepWrap=document.createElement('div'); lepWrap.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10000;pointer-events:none;text-align:center;';
+      const lep=document.createElement('img'); lep.src='leprachaundance.gif'; lep.style.cssText='width:140px;height:auto;transform:scale(0) translateY(16px);transition:transform 0.5s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4));'; lepWrap.appendChild(lep); document.body.appendChild(lepWrap);
+      requestAnimationFrame(()=>{ svg.style.opacity='1'; setTimeout(()=>{ lep.style.transform='scale(1) translateY(0)'; },450); setTimeout(()=>{ svg.style.opacity='0'; lep.style.transition='transform 0.4s ease-in'; lep.style.transform='scale(0) translateY(16px)'; setTimeout(()=>{ svg.remove(); lepWrap.remove(); },700); },3300); });
+    }
+
+    function shootingStar() {
+      const cvs=document.createElement('canvas'); cvs.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;'; cvs.width=window.innerWidth; cvs.height=window.innerHeight; document.body.appendChild(cvs);
+      const ctx=cvs.getContext('2d'),W=cvs.width,H=cvs.height;
+      const stars=Array.from({length:18},()=>{ const sf=Math.floor(Math.random()*90),dur=Math.floor(Math.random()*35+40),sx=Math.random()*W,sy=-(Math.random()*30+10),drift=(Math.random()-0.5)*60,ex=sx+drift,ey=H*(0.45+Math.random()*0.65),tf=0.12+Math.random()*0.10,lw=Math.random()*3+3,hr=Math.random()*4+5; return {sx,sy,ex,ey,startFrame:sf,duration:dur,trailFrac:tf,lineW:lw,headR:hr}; });
+      let frame=0;
+      function draw() {
+        ctx.clearRect(0,0,W,H); if(frame>=160){ cvs.remove(); return; }
+        stars.forEach(s=>{ const lf=frame-s.startFrame; if(lf<0||lf>=s.duration) return; const t=lf/s.duration,x=s.sx+(s.ex-s.sx)*t,y=s.sy+(s.ey-s.sy)*t,trailT=Math.max(0,t-s.trailFrac),tx=s.sx+(s.ex-s.sx)*trailT,ty=s.sy+(s.ey-s.sy)*trailT,alpha=t>0.72?1-(t-0.72)/0.28:1;
+          const g=ctx.createLinearGradient(tx,ty,x,y); g.addColorStop(0,'rgba(255,255,200,0)'); g.addColorStop(1,`rgba(255,255,200,${(alpha*0.95).toFixed(2)})`); ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(x,y); ctx.strokeStyle=g; ctx.lineWidth=s.lineW; ctx.stroke();
+          ctx.beginPath(); ctx.arc(x,y,s.headR,0,Math.PI*2); ctx.fillStyle=`rgba(255,255,190,${alpha.toFixed(2)})`; ctx.shadowBlur=28; ctx.shadowColor=`rgba(255,255,160,${alpha.toFixed(2)})`; ctx.fill(); ctx.shadowBlur=0;
+          const sc=Math.floor(Math.random()*3)+2; for(let i=0;i<sc;i++){ ctx.beginPath(); ctx.arc(x+(Math.random()-0.5)*28,y+(Math.random()-0.5)*28,Math.random()*3+0.8,0,Math.PI*2); ctx.fillStyle=`rgba(255,255,210,${(alpha*(Math.random()*0.6+0.3)).toFixed(2)})`; ctx.fill(); }
+        }); frame++; requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    }
+
+    init();
+  </script>
+</body>
+</html>
