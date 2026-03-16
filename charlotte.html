@@ -117,6 +117,28 @@
     @keyframes confetti-fall { to { transform: translateY(110vh) rotate(800deg); opacity: 0; } }
     @keyframes lep-wave { 0%, 100% { transform: scale(1) rotate(-10deg); } 50% { transform: scale(1.1) rotate(10deg); } }
 
+    /* ── View toggle ── */
+    .view-toggle { display:flex; justify-content:center; margin-bottom:20px; }
+    .view-btn { padding:7px 24px; border:2px solid #0f766e; font-size:0.85rem; font-family:inherit; font-weight:600; cursor:pointer; background:none; color:#0f766e; transition:background 0.15s,color 0.15s; line-height:1.4; }
+    .view-btn:first-child { border-radius:9px 0 0 9px; }
+    .view-btn:last-child { border-radius:0 9px 9px 0; margin-left:-2px; }
+    .view-btn.active { background:#0f766e; color:#fff; }
+
+    /* ── Day view ── */
+    .day-nav { display:flex; align-items:center; gap:8px; margin-bottom:16px; }
+    .day-title-wrap { flex:1; text-align:center; }
+    .day-title { font-size:1.2rem; font-weight:700; color:#333; }
+    .day-date-sub { font-size:0.78rem; color:#aaa; margin-top:2px; }
+    .day-chore-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+    .day-chore-item { display:flex; align-items:center; gap:14px; padding:14px 16px; border:2px solid #ccfbf1; border-radius:14px; cursor:pointer; transition:border-color 0.15s,background 0.15s; user-select:none; -webkit-tap-highlight-color:transparent; }
+    .day-chore-item:hover { border-color:#5eead4; background:#f0fffe; }
+    .day-chore-item.checked { background:#f0fdfa; border-color:#0f766e; }
+    .day-chore-item-label { flex:1; font-size:1rem; font-weight:600; color:#333; }
+    .day-chore-item-cb { width:40px; height:40px; flex-shrink:0; border:2.5px solid #99f6e4; border-radius:11px; background:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; transition:background 0.15s,border-color 0.15s; }
+    .day-chore-item.checked .day-chore-item-cb { background:#0f766e; border-color:#0f766e; }
+    #btn-day-today { background: #f59e0b; }
+    #btn-day-today:hover { background: #d97706; }
+
     @media (max-width: 600px) {
       body { padding: 12px 10px 40px; }
       .card { padding: 20px 14px 28px; border-radius: 18px; }
@@ -152,23 +174,49 @@
   <div class="card">
     <button class="cog-btn" id="settings-btn" title="Sync Settings">⚙️</button>
     <h1>🌿 Charlotte's Chore Chart 🌿</h1>
-    <div class="week-nav">
-      <button class="nav-btn" id="btn-prev">← Prev</button>
-      <p class="week-range" id="week-range"></p>
-      <button class="nav-btn" id="btn-today">Today</button>
-      <button class="nav-btn" id="btn-next">Next →</button>
+    <div class="view-toggle">
+      <button class="view-btn active" id="btn-week-view">📅 Week</button>
+      <button class="view-btn" id="btn-day-view">☀️ Day</button>
     </div>
-    <div class="progress-wrap">
-      <div class="progress-labels"><span>Weekly Progress</span><span id="prog-text">0 / 42</span></div>
-      <div class="progress-track"><div class="progress-bar" id="prog-bar"></div></div>
+
+    <div id="week-view">
+      <div class="week-nav">
+        <button class="nav-btn" id="btn-prev">← Prev</button>
+        <p class="week-range" id="week-range"></p>
+        <button class="nav-btn" id="btn-today">Today</button>
+        <button class="nav-btn" id="btn-next">Next →</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-labels"><span>Weekly Progress</span><span id="prog-text">0 / 42</span></div>
+        <div class="progress-track"><div class="progress-bar" id="prog-bar"></div></div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr id="header-row"><th>Chore</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <button class="add-chore-btn" id="add-chore-btn">+ Add Chore</button>
     </div>
-    <div class="table-scroll">
-      <table>
-        <thead><tr id="header-row"><th>Chore</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
+
+    <div id="day-view" style="display:none">
+      <div class="day-nav">
+        <button class="nav-btn" id="btn-day-prev">← Prev</button>
+        <div class="day-title-wrap">
+          <div class="day-title" id="day-title"></div>
+          <div class="day-date-sub" id="day-date-sub"></div>
+        </div>
+        <button class="nav-btn" id="btn-day-today">Today</button>
+        <button class="nav-btn" id="btn-day-next">Next →</button>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-labels"><span>Daily Progress</span><span id="day-prog-text">0 / 6</span></div>
+        <div class="progress-track"><div class="progress-bar" id="day-prog-bar"></div></div>
+      </div>
+      <div class="day-chore-list" id="day-chore-list"></div>
+      <button class="add-chore-btn" id="add-chore-btn-day">+ Add Chore</button>
     </div>
-    <button class="add-chore-btn" id="add-chore-btn">+ Add Chore</button>
+
     <div class="goal-box">
       <div class="goal-title-row">
         <h2>🎯 Charlotte's Goal This Week</h2>
@@ -249,6 +297,7 @@
 
     let personData = { checks: {}, goals: {}, chores: [] };
     let weekOffset = 0, currentWK = '';
+    let currentDay = getTodayIndex(), viewMode = 'week';
 
     function getChecks() { return personData.checks[currentWK] || {}; }
     function getGoals() {
@@ -265,8 +314,8 @@
     function setCheck(key,val) { if(!personData.checks[currentWK]) personData.checks[currentWK]={}; personData.checks[currentWK][key]=val; persistChanges(); }
 
     function setChoreLabel(id,label) { const c=personData.chores.find(c=>c.id===id); if(c){c.label=label;persistChanges();} }
-    function deleteChore(id) { personData.chores=personData.chores.filter(c=>c.id!==id); persistChanges(); renderWeek(); }
-    function addChore() { const id='c_'+Date.now(); personData.chores.push({id,label:''}); persistChanges(); renderWeek(); setTimeout(()=>{ const ins=document.querySelectorAll('.chore-label-input'); if(ins.length) ins[ins.length-1].focus(); },50); }
+    function deleteChore(id) { personData.chores=personData.chores.filter(c=>c.id!==id); persistChanges(); refresh(); }
+    function addChore() { const id='c_'+Date.now(); personData.chores.push({id,label:''}); persistChanges(); refresh(); setTimeout(()=>{ const ins=document.querySelectorAll('.chore-label-input'); if(ins.length) ins[ins.length-1].focus(); },50); }
 
     function saveLocal()  { localStorage.setItem(PREFIX+'data', JSON.stringify(personData)); }
     function loadLocal()  { try { return JSON.parse(localStorage.getItem(PREFIX+'data')||'{}'); } catch { return {}; } }
@@ -310,11 +359,68 @@
     function persistChanges() { saveLocal(); if(!getApiKey()||!getBinId()) return; setSyncState('saving'); clearTimeout(syncTimer); syncTimer=setTimeout(cloudSaveNow,1400); }
 
     async function init() {
+      viewMode = localStorage.getItem(PREFIX+'view') || 'week';
+      currentDay = getTodayIndex();
       const cloud=await cloudLoad();
       if (cloud&&typeof cloud==='object') { personData={checks:{},goals:{},chores:[],...cloud}; saveLocal(); }
       else { personData={checks:{},goals:{},chores:[],...loadLocal()}; }
       if(!personData.chores||!personData.chores.length) personData.chores=DEFAULT_CHORES.map(c=>({...c}));
-      renderWeek(); updateSyncFooter();
+      document.getElementById('week-view').style.display = viewMode==='week' ? '' : 'none';
+      document.getElementById('day-view').style.display  = viewMode==='day'  ? '' : 'none';
+      document.getElementById('btn-week-view').classList.toggle('active', viewMode==='week');
+      document.getElementById('btn-day-view').classList.toggle('active',  viewMode==='day');
+      if(viewMode==='day') renderDay(); else renderWeek();
+      updateSyncFooter();
+    }
+
+    function refresh() { if(viewMode==='day') renderDay(); else renderWeek(); }
+
+    function setView(mode) {
+      viewMode=mode; localStorage.setItem(PREFIX+'view',mode);
+      document.getElementById('week-view').style.display = mode==='week' ? '' : 'none';
+      document.getElementById('day-view').style.display  = mode==='day'  ? '' : 'none';
+      document.getElementById('btn-week-view').classList.toggle('active', mode==='week');
+      document.getElementById('btn-day-view').classList.toggle('active',  mode==='day');
+      if(mode==='day') renderDay(); else renderWeek();
+    }
+
+    const DAY_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+    function renderDay() {
+      const mon=getMondayFor(weekOffset); currentWK=weekKeyFor(mon);
+      const dates=weekDatesFor(mon);
+      document.getElementById('day-title').textContent=DAY_FULL[currentDay];
+      document.getElementById('day-date-sub').textContent=fmt(dates[currentDay]);
+      const isToday=weekOffset===0&&currentDay===getTodayIndex();
+      document.getElementById('btn-day-today').style.display=isToday?'none':'inline-block';
+      const list=document.getElementById('day-chore-list'); list.innerHTML='';
+      const wkChecks=getChecks();
+      getChores().forEach(chore=>{
+        const key=`${chore.id}_${currentDay}`, checked=!!wkChecks[key];
+        const item=document.createElement('div'); item.className='day-chore-item'+(checked?' checked':'');
+        const lbl=document.createElement('span'); lbl.className='day-chore-item-label'; lbl.textContent=chore.label||'New chore…';
+        const cb=document.createElement('div'); cb.className='day-chore-item-cb'; cb.textContent=checked?'⭐':'';
+        item.appendChild(lbl); item.appendChild(cb);
+        item.addEventListener('click',()=>{
+          const nowChecked=!item.classList.contains('checked');
+          const wasChecked=!!getChecks()[key];
+          setCheck(key,nowChecked); item.classList.toggle('checked',nowChecked); cb.textContent=nowChecked?'⭐':'';
+          updateDayProgress(); if(nowChecked&&!wasChecked) triggerFX();
+        });
+        list.appendChild(item);
+      });
+      updateDayProgress(); updateGoalDisplay();
+    }
+
+    function updateDayProgress() {
+      const chores=getChores(), total=chores.length, wkChecks=getChecks();
+      const done=chores.filter(c=>!!wkChecks[`${c.id}_${currentDay}`]).length;
+      const pct=total>0?(done/total)*100:0;
+      document.getElementById('day-prog-bar').style.width=pct+'%';
+      document.getElementById('day-prog-text').textContent=`${done} / ${total}`;
+      const b=document.getElementById('all-done');
+      if(total>0&&done===total){ b.textContent='🎉 Amazing Charlotte! All done for today! 🎉'; b.style.display='block'; bigCelebration(); }
+      else { b.style.display='none'; }
     }
 
     function renderWeek() {
@@ -368,7 +474,7 @@
     function closeChoreModal() { document.getElementById('chore-modal').style.display='none'; }
     document.getElementById('chore-cancel-btn').addEventListener('click',closeChoreModal);
     document.getElementById('chore-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('chore-modal')) closeChoreModal(); });
-    document.getElementById('chore-save-btn').addEventListener('click',()=>{ if(editingChoreId){ setChoreLabel(editingChoreId,document.getElementById('chore-modal-input').value); renderWeek(); } closeChoreModal(); });
+    document.getElementById('chore-save-btn').addEventListener('click',()=>{ if(editingChoreId){ setChoreLabel(editingChoreId,document.getElementById('chore-modal-input').value); refresh(); } closeChoreModal(); });
     document.getElementById('chore-delete-btn').addEventListener('click',()=>{ if(editingChoreId){ deleteChore(editingChoreId); } closeChoreModal(); });
 
     let editingGoalId=null;
@@ -395,12 +501,19 @@
     document.getElementById('btn-today').addEventListener('click',()=>{ weekOffset=0; renderWeek(); });
     document.getElementById('add-chore-btn').addEventListener('click',addChore);
 
+    document.getElementById('btn-week-view').addEventListener('click',()=>setView('week'));
+    document.getElementById('btn-day-view').addEventListener('click',()=>setView('day'));
+    document.getElementById('btn-day-prev').addEventListener('click',()=>{ currentDay--; if(currentDay<0){currentDay=6;weekOffset--;} renderDay(); });
+    document.getElementById('btn-day-next').addEventListener('click',()=>{ currentDay++; if(currentDay>6){currentDay=0;weekOffset++;} renderDay(); });
+    document.getElementById('btn-day-today').addEventListener('click',()=>{ weekOffset=0; currentDay=getTodayIndex(); renderDay(); });
+    document.getElementById('add-chore-btn-day').addEventListener('click',addChore);
+
     function updateProgress() {
       const total=getChores().length*7,done=Object.values(getChecks()).filter(Boolean).length,pct=total>0?(done/total)*100:0;
       document.getElementById('prog-bar').style.width=pct+'%';
       document.getElementById('prog-text').textContent=`${done} / ${total}`;
       const b=document.getElementById('all-done');
-      if(total>0&&done===total){ b.style.display='block'; bigCelebration(); } else { b.style.display='none'; }
+      if(total>0&&done===total){ b.textContent='🎉 Amazing Charlotte! Every chore done this week! 🎉'; b.style.display='block'; bigCelebration(); } else { b.style.display='none'; }
     }
 
     function openSettings()  { document.getElementById('s-key').value=getApiKey(); document.getElementById('s-bin').value=getBinId(); setModalMsg('',''); document.getElementById('settings-modal').style.display='flex'; }
