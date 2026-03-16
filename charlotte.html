@@ -116,6 +116,35 @@
     #fx { position: fixed; inset: 0; pointer-events: none; z-index: 9998; overflow: hidden; }
     @keyframes confetti-fall { to { transform: translateY(110vh) rotate(800deg); opacity: 0; } }
     @keyframes lep-wave { 0%, 100% { transform: scale(1) rotate(-10deg); } 50% { transform: scale(1.1) rotate(10deg); } }
+
+    @media (max-width: 600px) {
+      body { padding: 12px 10px 40px; }
+      .card { padding: 20px 14px 28px; border-radius: 18px; }
+      .cog-btn { top: 14px; right: 14px; }
+
+      .week-nav { flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+      .week-range { order: -1; width: 100%; min-width: 0; margin-bottom: 2px; }
+      .nav-btn { flex: 1; padding: 9px 8px; font-size: 0.82rem; text-align: center; }
+
+      .progress-wrap { margin-bottom: 20px; }
+
+      .table-scroll { -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
+      thead th:first-child { min-width: 130px; }
+      thead th { padding: 10px 5px; font-size: 0.72rem; }
+      tbody td { padding: 6px 3px; }
+      tbody td:first-child { padding-left: 10px; }
+      .cb-box { width: 28px; height: 28px; font-size: 14px; border-radius: 7px; }
+
+      .goal-box { padding: 16px; }
+      .goal-title-row h2 { font-size: 1rem; }
+
+      #all-done { font-size: 1.1rem; padding: 12px; }
+
+      .modal-overlay { align-items: flex-end; padding: 0; }
+      .modal-box { border-radius: 20px 20px 0 0; padding: 24px 18px 32px; max-width: 100%; }
+      .emoji-picker { max-height: 96px; }
+      .emoji-btn { font-size: 1.1rem; padding: 2px 4px; }
+    }
   </style>
 </head>
 <body>
