@@ -288,6 +288,19 @@
     </div>
   </div>
 
+  <div id="pin-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box" style="max-width:320px;text-align:center">
+      <h3>🔒 Enter PIN</h3>
+      <p class="modal-desc">This day is locked. Enter the PIN to make changes.</p>
+      <input id="pin-input" type="password" inputmode="numeric" class="modal-input" placeholder="••••" maxlength="4" style="text-align:center;font-size:1.4rem;letter-spacing:6px">
+      <p id="pin-msg" class="modal-msg error" style="min-height:1.2em"></p>
+      <div class="modal-actions" style="justify-content:center;gap:10px">
+        <button id="pin-cancel-btn" class="modal-cancel-btn">Cancel</button>
+        <button id="pin-ok-btn" class="modal-save-btn">Unlock</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const PREFIX = 'addie_';
 
@@ -373,9 +386,17 @@
     async function init() {
       viewMode = localStorage.getItem(PREFIX+'view') || 'week';
       currentDay = getTodayIndex();
+      const local=loadLocal();
       const cloud=await cloudLoad();
-      if (cloud&&typeof cloud==='object') { personData={checks:{},goals:{},chores:[],...cloud}; saveLocal(); }
-      else { personData={checks:{},goals:{},chores:[],...loadLocal()}; }
+      if (cloud&&typeof cloud==='object') {
+        personData={checks:{},goals:{},chores:[],...cloud};
+        // Merge local data on top so unsaved local changes (e.g. tab closed before debounce) are never lost
+        if(local.checks){for(const wk of Object.keys(local.checks)){if(!personData.checks[wk])personData.checks[wk]={};for(const[k,v]of Object.entries(local.checks[wk])){if(v)personData.checks[wk][k]=true;}}}
+        if(local.chores&&local.chores.length)personData.chores=local.chores;
+        if(local.goals){for(const wk of Object.keys(local.goals)){if(!personData.goals[wk])personData.goals[wk]=local.goals[wk];}}
+        saveLocal();
+      }
+      else { personData={checks:{},goals:{},chores:[],...local}; }
       if(!personData.chores||!personData.chores.length) personData.chores=DEFAULT_CHORES.map(c=>({...c}));
       document.getElementById('week-view').style.display = viewMode==='week' ? '' : 'none';
       document.getElementById('day-view').style.display  = viewMode==='day'  ? '' : 'none';
@@ -414,10 +435,8 @@
         const cb=document.createElement('div'); cb.className='day-chore-item-cb'; cb.textContent=checked?'⭐':'';
         item.appendChild(lbl); item.appendChild(cb);
         item.addEventListener('click',()=>{
-          const nowChecked=!item.classList.contains('checked');
-          const wasChecked=!!getChecks()[key];
-          setCheck(key,nowChecked); item.classList.toggle('checked',nowChecked); cb.textContent=nowChecked?'⭐':'';
-          updateDayProgress(); if(nowChecked&&!wasChecked) triggerFX();
+          const doCheck=()=>{const nowChecked=!item.classList.contains('checked');const wasChecked=!!getChecks()[key];setCheck(key,nowChecked);item.classList.toggle('checked',nowChecked);cb.textContent=nowChecked?'⭐':'';updateDayProgress();if(nowChecked&&!wasChecked)triggerFX();};
+          if(isTodayCell(currentDay)){doCheck();}else{requirePin(doCheck);}
         });
         list.appendChild(item);
       });
@@ -448,9 +467,9 @@
       getChores().forEach(chore=>{ const tr=document.createElement('tr'),labelTd=document.createElement('td');
         const lc=document.createElement('div'); lc.className='chore-label-cell';
         const nm=document.createElement('span'); nm.className='chore-name'+(chore.label?'':' chore-name-empty'); nm.textContent=chore.label||'New chore…';
-        const eb=document.createElement('button'); eb.className='chore-edit-btn'; eb.title='Edit'; eb.textContent='✏️'; eb.addEventListener('click',()=>openChoreModal(chore.id));
+        const eb=document.createElement('button'); eb.className='chore-edit-btn'; eb.title='Edit'; eb.textContent='✏️'; eb.addEventListener('click',()=>{if(weekOffset===0)openChoreModal(chore.id);else requirePin(()=>openChoreModal(chore.id));});
         lc.appendChild(nm); lc.appendChild(eb); labelTd.appendChild(lc); tr.appendChild(labelTd);
-        for(let d=0;d<7;d++){ const td=document.createElement('td'); if(d===todayIdx) td.classList.add('today-cell'); const key=`${chore.id}_${d}`,lbl=document.createElement('label'); lbl.className='cb-wrap'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!wkChecks[key]; const box=document.createElement('span'); box.className='cb-box'; box.textContent=cb.checked?'⭐':''; cb.addEventListener('change',()=>{ const jc=cb.checked&&!getChecks()[key]; setCheck(key,cb.checked); box.textContent=cb.checked?'⭐':''; updateProgress(); if(jc) triggerFX(); }); lbl.appendChild(cb); lbl.appendChild(box); td.appendChild(lbl); tr.appendChild(td); }
+        for(let d=0;d<7;d++){ const td=document.createElement('td'); if(d===todayIdx) td.classList.add('today-cell'); const key=`${chore.id}_${d}`,lbl=document.createElement('label'); lbl.className='cb-wrap'; const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=!!wkChecks[key]; const box=document.createElement('span'); box.className='cb-box'; box.textContent=cb.checked?'⭐':''; lbl.addEventListener('click',e=>{e.preventDefault();const doToggle=()=>{const nv=!cb.checked;const jc=nv&&!getChecks()[key];cb.checked=nv;box.textContent=nv?'⭐':'';setCheck(key,nv);updateProgress();if(jc)triggerFX();};if(isTodayCell(d)){doToggle();}else{requirePin(doToggle);}}); lbl.appendChild(cb); lbl.appendChild(box); td.appendChild(lbl); tr.appendChild(td); }
         tbody.appendChild(tr); });
       updateGoalDisplay(); updateProgress();
     }
@@ -465,7 +484,7 @@
         const row=document.createElement('div'); row.className='goal-item';
         const bullet=document.createElement('span'); bullet.className='goal-bullet'; bullet.textContent='•';
         const txt=document.createElement('span'); txt.className='goal-item-text'; txt.textContent=g.text;
-        const btn=document.createElement('button'); btn.className='goal-edit-btn'; btn.title='Edit'; btn.textContent='✏️'; btn.addEventListener('click',()=>openGoalModal(g.id));
+        const btn=document.createElement('button'); btn.className='goal-edit-btn'; btn.title='Edit'; btn.textContent='✏️'; btn.addEventListener('click',()=>{if(weekOffset===0)openGoalModal(g.id);else requirePin(()=>openGoalModal(g.id));});
         row.appendChild(bullet); row.appendChild(txt); row.appendChild(btn); el.appendChild(row);
       });
     }
@@ -483,7 +502,7 @@
     }
     function closeGoalModal() { document.getElementById('goal-modal').style.display='none'; }
 
-    document.getElementById('goal-add-btn').addEventListener('click',()=>openGoalModal());
+    document.getElementById('goal-add-btn').addEventListener('click',()=>{if(weekOffset===0)openGoalModal();else requirePin(()=>openGoalModal());});
     document.getElementById('goal-cancel-btn').addEventListener('click',closeGoalModal);
     document.getElementById('goal-modal').addEventListener('click',e=>{ if(e.target===document.getElementById('goal-modal')) closeGoalModal(); });
     document.getElementById('goal-save-btn').addEventListener('click',()=>{ const text=document.getElementById('goal-modal-input').value.trim(); if(text){ if(editingGoalId) updateGoal(editingGoalId,text); else addGoal(text); updateGoalDisplay(); } closeGoalModal(); });
@@ -511,14 +530,14 @@
     document.getElementById('btn-prev').addEventListener('click',()=>{ weekOffset--; renderWeek(); });
     document.getElementById('btn-next').addEventListener('click',()=>{ weekOffset++; renderWeek(); });
     document.getElementById('btn-today').addEventListener('click',()=>{ weekOffset=0; renderWeek(); });
-    document.getElementById('add-chore-btn').addEventListener('click',addChore);
+    document.getElementById('add-chore-btn').addEventListener('click',()=>{if(weekOffset===0)addChore();else requirePin(addChore);});
 
     document.getElementById('btn-week-view').addEventListener('click',()=>setView('week'));
     document.getElementById('btn-day-view').addEventListener('click',()=>setView('day'));
     document.getElementById('btn-day-prev').addEventListener('click',()=>{ currentDay--; if(currentDay<0){currentDay=6;weekOffset--;} renderDay(); });
     document.getElementById('btn-day-next').addEventListener('click',()=>{ currentDay++; if(currentDay>6){currentDay=0;weekOffset++;} renderDay(); });
     document.getElementById('btn-day-today').addEventListener('click',()=>{ weekOffset=0; currentDay=getTodayIndex(); renderDay(); });
-    document.getElementById('add-chore-btn-day').addEventListener('click',addChore);
+    document.getElementById('add-chore-btn-day').addEventListener('click',()=>{if(isTodayCell(currentDay))addChore();else requirePin(addChore);});
 
     function updateProgress() {
       const total=getChores().length*7, done=Object.values(getChecks()).filter(Boolean).length, pct=total>0?(done/total)*100:0;
@@ -538,8 +557,18 @@
     document.getElementById('s-create-btn').addEventListener('click',async()=>{ const k=document.getElementById('s-key').value.trim(); if(!k){setModalMsg('Enter your Master Key first.','error');return;} setApiKey(k); setModalMsg('Creating bin…',''); const id=await cloudCreateBin(); if(id){document.getElementById('s-bin').value=id;setModalMsg('✅ Bin created! Write down the Bin ID to use on other devices.','success');}else{setModalMsg('❌ Failed — check your Master Key.','error');} });
     document.getElementById('s-save-btn').addEventListener('click',async()=>{ const k=document.getElementById('s-key').value.trim(),b=document.getElementById('s-bin').value.trim(); if(!k||!b){setModalMsg('Both fields are required.','error');return;} setApiKey(k); setBinId(b); setModalMsg('Syncing…',''); await cloudSaveNow(); setModalMsg('✅ Saved! Data will now sync automatically.','success'); updateSyncFooter(); setTimeout(closeSettings,1400); });
 
+    const PIN='0210';
+    let pinUnlocked=false, _pinCb=null;
+    function isTodayCell(dayIdx){return weekOffset===0&&dayIdx===getTodayIndex();}
+    function requirePin(cb){if(pinUnlocked){cb();return;}_pinCb=cb;document.getElementById('pin-input').value='';document.getElementById('pin-msg').textContent='';document.getElementById('pin-modal').style.display='flex';setTimeout(()=>document.getElementById('pin-input').focus(),50);}
+    function closePinModal(){document.getElementById('pin-modal').style.display='none';_pinCb=null;}
+    document.getElementById('pin-ok-btn').addEventListener('click',()=>{const v=document.getElementById('pin-input').value.trim();if(v===PIN){pinUnlocked=true;const c=_pinCb;closePinModal();if(c)c();}else{document.getElementById('pin-msg').textContent='Incorrect PIN.';document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();}});
+    document.getElementById('pin-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pin-ok-btn').click();});
+    document.getElementById('pin-cancel-btn').addEventListener('click',closePinModal);
+    document.getElementById('pin-modal').addEventListener('click',e=>{if(e.target===document.getElementById('pin-modal'))closePinModal();});
+
     let fxTick=0;
-    function triggerFX()      { const t=fxTick%3; fxTick++; if(t===0) confetti(45); else if(t===1) shootingStar(); else rainbow(); }
+    function triggerFX()      { const t=fxTick%8; fxTick++; if(t===0) confetti(45); else if(t===1) shootingStar(); else if(t===2) rainbow(); else if(t===3) orcas(); else if(t===4) flowers(); else if(t===5) mermaids(); else if(t===6) dolphins(); else sunflowers(); }
     function bigCelebration() { confetti(130); setTimeout(rainbow,500); setTimeout(shootingStar,1100); setTimeout(()=>confetti(80),1800); }
 
     function confetti(count) {
@@ -572,6 +601,79 @@
         }); frame++; requestAnimationFrame(draw);
       }
       requestAnimationFrame(draw);
+    }
+
+    function orcas() {
+      const cvs=document.createElement('canvas'); cvs.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;'; cvs.width=window.innerWidth; cvs.height=window.innerHeight; document.body.appendChild(cvs);
+      const ctx=cvs.getContext('2d'),W=cvs.width,H=cvs.height;
+      function drawOrca(x,y,sc) {
+        ctx.save(); ctx.translate(x,y); ctx.scale(sc,sc);
+        ctx.beginPath(); ctx.ellipse(0,0,55,23,0,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(8,9,30,12,0.2,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(30,-7,10,7,-0.3,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        ctx.beginPath(); ctx.arc(32,-7,2.5,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(5,-23); ctx.lineTo(17,-50); ctx.lineTo(27,-23); ctx.fillStyle='#111'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-50,3); ctx.bezierCurveTo(-70,-13,-82,-9,-77,3); ctx.bezierCurveTo(-82,15,-70,19,-50,3); ctx.fillStyle='#111'; ctx.fill();
+        ctx.restore();
+      }
+      const pod=Array.from({length:5},(_,i)=>({x:-140-i*170,baseY:H*(0.25+Math.random()*0.5),speed:3.5+Math.random()*2.5,sc:0.5+Math.random()*0.5,phase:Math.random()*Math.PI*2}));
+      let fr=0;
+      function draw(){ctx.clearRect(0,0,W,H); if(pod.every(p=>p.x>W+140)){cvs.remove();return;} pod.forEach(p=>{p.x+=p.speed; drawOrca(p.x,p.baseY+Math.sin(fr*0.04+p.phase)*16,p.sc);}); fr++; requestAnimationFrame(draw);}
+      requestAnimationFrame(draw);
+    }
+
+    function flowers() {
+      const EMOJIS=['🌸','🌺','🌼','🌷','🌹','💐']; const cx=window.innerWidth/2,cy=window.innerHeight/2;
+      for(let i=0;i<30;i++) setTimeout(()=>{
+        const el=document.createElement('div'),ang=Math.random()*Math.PI*2,dist=90+Math.random()*200,size=1.4+Math.random()*1.8,dur=1.0+Math.random()*0.8,delay=Math.random()*0.3;
+        el.textContent=EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+        el.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;font-size:${size}rem;pointer-events:none;z-index:9999;transform:translate(-50%,-50%) scale(0);transition:left ${dur}s ${delay}s ease-out,top ${dur}s ${delay}s ease-out,transform ${dur}s ${delay}s ease-out,opacity 0.4s ${(dur+delay-0.35).toFixed(2)}s;opacity:1;`;
+        document.body.appendChild(el);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.left=(cx+Math.cos(ang)*dist)+'px'; el.style.top=(cy+Math.sin(ang)*dist)+'px'; el.style.transform=`translate(-50%,-50%) scale(1) rotate(${Math.random()*360}deg)`; el.style.opacity='0';}));
+        setTimeout(()=>el.remove(),(dur+delay+0.5)*1000);
+      },Math.random()*400);
+    }
+
+    function mermaids() {
+      const swimmers=[];
+      for(let i=0;i<6;i++){const el=document.createElement('div'),baseY=window.innerHeight*(0.12+i*0.13),speed=2.8+Math.random()*2,size=2.2+Math.random()*1.2,phase=Math.random()*Math.PI*2; el.textContent='🧜‍♀️'; el.style.cssText=`position:fixed;left:-90px;top:${baseY}px;font-size:${size}rem;pointer-events:none;z-index:9999;`; document.body.appendChild(el); swimmers.push({el,x:-90-i*130,baseY,speed,phase});}
+      let fr=0;
+      function draw(){if(swimmers.every(s=>s.x>window.innerWidth+90)){swimmers.forEach(s=>s.el.remove());return;} swimmers.forEach(s=>{s.x+=s.speed; s.el.style.left=s.x+'px'; s.el.style.top=(s.baseY+Math.sin(fr*0.07+s.phase)*20)+'px';}); fr++; requestAnimationFrame(draw);}
+      requestAnimationFrame(draw);
+    }
+
+    function dolphins() {
+      const cvs=document.createElement('canvas'); cvs.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:9999;'; cvs.width=window.innerWidth; cvs.height=window.innerHeight; document.body.appendChild(cvs);
+      const ctx=cvs.getContext('2d'),W=cvs.width,H=cvs.height;
+      function drawDolphin(x,y,sc,ang){
+        ctx.save(); ctx.translate(x,y); ctx.rotate(ang); ctx.scale(sc,sc);
+        ctx.beginPath(); ctx.ellipse(0,0,38,13,0,0,Math.PI*2); ctx.fillStyle='#5ba3c9'; ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6,5,24,7,0.1,0,Math.PI*2); ctx.fillStyle='#d4ecf7'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(36,-2); ctx.lineTo(50,0); ctx.lineTo(36,4); ctx.fillStyle='#5ba3c9'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(3,-13); ctx.lineTo(14,-32); ctx.lineTo(20,-13); ctx.fillStyle='#4a8db0'; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-36,2); ctx.bezierCurveTo(-54,-11,-63,-7,-59,2); ctx.bezierCurveTo(-63,11,-54,15,-36,2); ctx.fillStyle='#4a8db0'; ctx.fill();
+        ctx.beginPath(); ctx.arc(31,-3,2.5,0,Math.PI*2); ctx.fillStyle='#1a1a1a'; ctx.fill();
+        ctx.restore();
+      }
+      const jumpers=Array.from({length:6},(_,i)=>({startX:W*(0.07+i*0.16),startY:H*(0.78+Math.random()*0.1),sc:0.45+Math.random()*0.35,delay:i*16,arcH:H*(0.25+Math.random()*0.18)}));
+      let fr=0;
+      function draw(){
+        ctx.clearRect(0,0,W,H); if(fr>=190){cvs.remove();return;}
+        jumpers.forEach(d=>{const ef=fr-d.delay; if(ef<0||ef>90)return; const t=ef/90,x=d.startX+t*80,y=d.startY-Math.sin(t*Math.PI)*d.arcH,vx=80/90,vy=-d.arcH*Math.PI/90*Math.cos(t*Math.PI); drawDolphin(x,y,d.sc,Math.atan2(vy,vx)*0.55);});
+        fr++; requestAnimationFrame(draw);
+      }
+      requestAnimationFrame(draw);
+    }
+
+    function sunflowers() {
+      for(let i=0;i<9;i++) setTimeout(()=>{
+        const el=document.createElement('div'),x=window.innerWidth*(0.05+Math.random()*0.9),size=2.2+Math.random()*2.2,dur=0.65+Math.random()*0.5,targetBottom=window.innerHeight*(0.05+Math.random()*0.35);
+        el.textContent='🌻';
+        el.style.cssText=`position:fixed;left:${x}px;bottom:-70px;font-size:${size}rem;pointer-events:none;z-index:9999;transform:translateX(-50%) scale(0) rotate(${(Math.random()-.5)*25}deg);transition:bottom ${dur}s cubic-bezier(.34,1.56,.64,1),transform ${dur}s cubic-bezier(.34,1.56,.64,1);opacity:1;`;
+        document.body.appendChild(el);
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.bottom=targetBottom+'px'; el.style.transform=`translateX(-50%) scale(1) rotate(${(Math.random()-.5)*12}deg)`;}));
+        setTimeout(()=>{el.style.transition+=',opacity 0.5s'; el.style.opacity='0'; setTimeout(()=>el.remove(),600);},2800);
+      },i*200);
     }
 
     init();
