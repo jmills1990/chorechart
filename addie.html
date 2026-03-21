@@ -37,8 +37,15 @@
     .orca-modal-box h3 { font-size: 1.2rem; color: #f9a8d4; margin-bottom: 16px; text-align: center; }
     .orca-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
     .orca-grid img { width: 100%; border-radius: 12px; object-fit: cover; aspect-ratio: 4/3; display: block; }
-    .orca-close-btn { display: block; margin: 0 auto; padding: 9px 28px; background: #be185d; border: none; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; }
+    .orca-api-slot { width: 100%; aspect-ratio: 4/3; border-radius: 12px; background: #2a0a1a; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+    .orca-api-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: block; }
+    .orca-api-slot.loading::after { content: '🐋'; font-size: 2.5rem; animation: orca-pulse 0.9s ease-in-out infinite alternate; }
+    @keyframes orca-pulse { from { transform: scale(0.85); opacity: 0.5; } to { transform: scale(1.1); opacity: 1; } }
+    .orca-btn-row { display: flex; gap: 10px; justify-content: center; }
+    .orca-close-btn { padding: 9px 28px; background: #be185d; border: none; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; }
     .orca-close-btn:hover { background: #9d174d; }
+    .orca-refresh-btn { padding: 9px 18px; background: none; border: 2px solid #f9a8d4; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 600; color: #f9a8d4; cursor: pointer; transition: background 0.15s; }
+    .orca-refresh-btn:hover { background: rgba(249,168,212,0.1); }
 
     h1 { text-align: center; font-size: clamp(1.6rem, 5vw, 2.4rem); color: #be185d; letter-spacing: 1px; margin-bottom: 4px; }
 
@@ -263,8 +270,13 @@
         <img src="orca4.jpeg" alt="Orca 4">
         <img src="orca.webp" alt="Orca">
         <img src="orca2.webp" alt="Orca 2">
+        <div class="orca-api-slot loading" id="orca-api-1"></div>
+        <div class="orca-api-slot loading" id="orca-api-2"></div>
       </div>
-      <button class="orca-close-btn" id="orca-close-btn">Close</button>
+      <div class="orca-btn-row">
+        <button class="orca-refresh-btn" id="orca-refresh-btn">🔄 New Orcas</button>
+        <button class="orca-close-btn" id="orca-close-btn">Close</button>
+      </div>
     </div>
   </div>
 
@@ -357,9 +369,44 @@
     });
 
     // ── Orca gallery modal ──
+    function loadApiOrcas() {
+      ['orca-api-1', 'orca-api-2'].forEach(id => {
+        const slot = document.getElementById(id);
+        slot.innerHTML = '';
+        slot.classList.add('loading');
+      });
+      // iNaturalist API — free, no key, real wildlife photos of Orcinus orca
+      fetch('https://api.inaturalist.org/v1/observations?taxon_name=Orcinus+orca&photos=true&per_page=20&quality_grade=research&order_by=random')
+        .then(r => r.json())
+        .then(data => {
+          const withPhotos = data.results.filter(o => o.photos && o.photos.length > 0);
+          // shuffle and pick 2
+          for (let i = withPhotos.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [withPhotos[i], withPhotos[j]] = [withPhotos[j], withPhotos[i]];
+          }
+          withPhotos.slice(0, 2).forEach((obs, i) => {
+            const slot = document.getElementById('orca-api-' + (i + 1));
+            slot.classList.remove('loading');
+            const img = document.createElement('img');
+            img.src = obs.photos[0].url.replace('square', 'medium');
+            img.alt = 'Wild orca';
+            slot.appendChild(img);
+          });
+        })
+        .catch(() => {
+          ['orca-api-1', 'orca-api-2'].forEach(id => {
+            const slot = document.getElementById(id);
+            slot.classList.remove('loading');
+            slot.textContent = '🐋';
+          });
+        });
+    }
     document.getElementById('orca-gallery-btn').addEventListener('click', () => {
       document.getElementById('orca-modal').style.display = 'flex';
+      loadApiOrcas();
     });
+    document.getElementById('orca-refresh-btn').addEventListener('click', loadApiOrcas);
     document.getElementById('orca-close-btn').addEventListener('click', () => {
       document.getElementById('orca-modal').style.display = 'none';
     });
