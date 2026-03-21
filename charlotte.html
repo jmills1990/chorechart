@@ -356,30 +356,18 @@
 
     // ── Kitty gallery modal ──
     function loadApiKitties() {
-      ['kitty-api-1', 'kitty-api-2'].forEach(id => {
-        const slot = document.getElementById(id);
+      [1, 2].forEach(i => {
+        const slot = document.getElementById('kitty-api-' + i);
         slot.innerHTML = '';
         slot.classList.add('loading');
+        const img = document.createElement('img');
+        // cataas.com returns a random cat image directly — no fetch or API key needed
+        img.src = 'https://cataas.com/cat?v=' + Date.now() + '_' + i;
+        img.alt = 'Random kitty';
+        img.onload = () => slot.classList.remove('loading');
+        img.onerror = () => { slot.classList.remove('loading'); slot.textContent = '🐱'; };
+        slot.appendChild(img);
       });
-      fetch('https://api.thecatapi.com/v1/images/search?limit=2')
-        .then(r => r.json())
-        .then(data => {
-          data.forEach((cat, i) => {
-            const slot = document.getElementById('kitty-api-' + (i + 1));
-            slot.classList.remove('loading');
-            const img = document.createElement('img');
-            img.src = cat.url;
-            img.alt = 'Random kitty';
-            slot.appendChild(img);
-          });
-        })
-        .catch(() => {
-          ['kitty-api-1', 'kitty-api-2'].forEach(id => {
-            const slot = document.getElementById(id);
-            slot.classList.remove('loading');
-            slot.textContent = '🐱';
-          });
-        });
     }
     document.getElementById('kitty-gallery-btn').addEventListener('click', () => {
       document.getElementById('kitty-modal').style.display = 'flex';
