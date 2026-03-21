@@ -29,8 +29,15 @@
     .kitty-modal-box h3 { font-size: 1.2rem; color: #5eead4; margin-bottom: 16px; text-align: center; }
     .kitty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
     .kitty-grid img { width: 100%; border-radius: 12px; object-fit: cover; aspect-ratio: 1; display: block; }
-    .kitty-close-btn { display: block; margin: 0 auto; padding: 9px 28px; background: #0f766e; border: none; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; }
+    .kitty-api-slot { width: 100%; aspect-ratio: 1; border-radius: 12px; background: #0d2e2a; display: flex; align-items: center; justify-content: center; font-size: 2rem; overflow: hidden; position: relative; }
+    .kitty-api-slot img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; display: block; }
+    .kitty-api-slot.loading::after { content: '🐱'; font-size: 2.5rem; animation: kitty-pulse 0.8s ease-in-out infinite alternate; }
+    @keyframes kitty-pulse { from { transform: scale(0.85); opacity: 0.5; } to { transform: scale(1.1); opacity: 1; } }
+    .kitty-btn-row { display: flex; gap: 10px; justify-content: center; }
+    .kitty-close-btn { padding: 9px 28px; background: #0f766e; border: none; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 700; color: #fff; cursor: pointer; transition: background 0.15s; }
     .kitty-close-btn:hover { background: #0d9488; }
+    .kitty-refresh-btn { padding: 9px 18px; background: none; border: 2px solid #5eead4; border-radius: 9px; font-size: 0.88rem; font-family: inherit; font-weight: 600; color: #5eead4; cursor: pointer; transition: background 0.15s; }
+    .kitty-refresh-btn:hover { background: rgba(94,234,212,0.1); }
 
     h1 { text-align: center; font-size: clamp(1.6rem, 5vw, 2.4rem); color: #0f766e; letter-spacing: 1px; margin-bottom: 4px; }
 
@@ -249,8 +256,13 @@
       <div class="kitty-grid">
         <img src="kitty.gif" alt="Kitty">
         <img src="kitty2.gif" alt="Kitty 2">
+        <div class="kitty-api-slot loading" id="kitty-api-1"></div>
+        <div class="kitty-api-slot loading" id="kitty-api-2"></div>
       </div>
-      <button class="kitty-close-btn" id="kitty-close-btn">Close</button>
+      <div class="kitty-btn-row">
+        <button class="kitty-refresh-btn" id="kitty-refresh-btn">🔄 New Kitties</button>
+        <button class="kitty-close-btn" id="kitty-close-btn">Close</button>
+      </div>
     </div>
   </div>
 
@@ -343,9 +355,37 @@
     });
 
     // ── Kitty gallery modal ──
+    function loadApiKitties() {
+      ['kitty-api-1', 'kitty-api-2'].forEach(id => {
+        const slot = document.getElementById(id);
+        slot.innerHTML = '';
+        slot.classList.add('loading');
+      });
+      fetch('https://api.thecatapi.com/v1/images/search?limit=2')
+        .then(r => r.json())
+        .then(data => {
+          data.forEach((cat, i) => {
+            const slot = document.getElementById('kitty-api-' + (i + 1));
+            slot.classList.remove('loading');
+            const img = document.createElement('img');
+            img.src = cat.url;
+            img.alt = 'Random kitty';
+            slot.appendChild(img);
+          });
+        })
+        .catch(() => {
+          ['kitty-api-1', 'kitty-api-2'].forEach(id => {
+            const slot = document.getElementById(id);
+            slot.classList.remove('loading');
+            slot.textContent = '🐱';
+          });
+        });
+    }
     document.getElementById('kitty-gallery-btn').addEventListener('click', () => {
       document.getElementById('kitty-modal').style.display = 'flex';
+      loadApiKitties();
     });
+    document.getElementById('kitty-refresh-btn').addEventListener('click', loadApiKitties);
     document.getElementById('kitty-close-btn').addEventListener('click', () => {
       document.getElementById('kitty-modal').style.display = 'none';
     });
