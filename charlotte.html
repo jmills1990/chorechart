@@ -671,7 +671,7 @@
       bands.forEach((color,i)=>{ const r=rMax-i*(rMax/bands.length)*0.28,path=document.createElementNS(NS,'path'); path.setAttribute('d',`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`); path.setAttribute('stroke',color); path.setAttribute('stroke-width',String(Math.round(bandW))); path.setAttribute('fill','none'); path.setAttribute('stroke-opacity','0.92'); svg.appendChild(path); });
       document.body.appendChild(svg);
       const lepWrap=document.createElement('div'); lepWrap.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10000;pointer-events:none;text-align:center;';
-      const lep=document.createElement('img'); lep.src='leprachaundance.gif'; lep.style.cssText='width:140px;height:auto;transform:scale(0) translateY(16px);transition:transform 0.5s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4));'; lepWrap.appendChild(lep); document.body.appendChild(lepWrap);
+      const lep=document.createElement('img'); lep.src='turkeygif'; lep.style.cssText='width:140px;height:auto;transform:scale(0) translateY(16px);transition:transform 0.5s cubic-bezier(.34,1.56,.64,1);filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4));'; lepWrap.appendChild(lep); document.body.appendChild(lepWrap);
       requestAnimationFrame(()=>{ svg.style.opacity='1'; setTimeout(()=>{ lep.style.transform='scale(1) translateY(0)'; },450); setTimeout(()=>{ svg.style.opacity='0'; lep.style.transition='transform 0.4s ease-in'; lep.style.transform='scale(0) translateY(16px)'; setTimeout(()=>{ svg.remove(); lepWrap.remove(); },700); },3300); });
     }
 
