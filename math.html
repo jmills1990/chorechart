@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Math Fun! | Addie</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px 16px 50px;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(160deg,#2d0a1f,#4a0e2e 45%,#831843);color:#312135}
+main{max-width:690px;margin:auto;background:#fff;border-radius:24px;padding:28px;box-shadow:0 24px 80px #0007;text-align:center}
+a.back{display:inline-block;float:left;color:#be185d;font-size:.9rem;font-weight:700;text-decoration:none;padding:8px 2px}
+h1{clear:both;margin:18px 0 6px;color:#be185d;font-size:clamp(2rem,6vw,2.8rem)}.intro{color:#765e70;margin:0 0 24px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}.stat{background:#fff1f7;border:1px solid #fbcfe8;border-radius:14px;padding:12px 5px}.stat b{display:block;color:#9d174d;font-size:clamp(1.2rem,4vw,1.65rem);font-variant-numeric:tabular-nums}.stat small{font-size:.8rem;color:#806478}
+.track{background:#fce7f3;border-radius:100px;height:13px;overflow:hidden;margin:12px 0 24px}#fill{width:0;height:100%;background:linear-gradient(90deg,#f472b6,#ec4899,#f97316);transition:width .25s}
+.stage{background:linear-gradient(145deg,#fff7fa,#fdf2f8);border:2px solid #fbcfe8;border-radius:22px;padding:28px 15px;min-height:345px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.question{font-size:clamp(3.4rem,12vw,5.8rem);font-weight:800;letter-spacing:-.05em;color:#831843;margin:14px 0 20px}
+input{display:block;width:200px;max-width:100%;padding:10px;text-align:center;font:700 2.5rem 'Segoe UI',sans-serif;border:3px solid #f9a8d4;border-radius:15px;outline:none;background:white;color:#831843}input:focus{border-color:#be185d;box-shadow:0 0 0 4px #fce7f3}input.wrong{border-color:#ef4444;animation:shake .25s}@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+button{border:0;border-radius:12px;background:#be185d;color:white;padding:13px 28px;font:700 1.05rem 'Segoe UI',sans-serif;cursor:pointer;margin-top:16px}button:hover{background:#9d174d}button:focus-visible,a:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}button:disabled{opacity:.5;cursor:default}
+#message{min-height:26px;color:#be185d;font-weight:700;margin:15px 0 0}#message.error{color:#b91c1c}#start p,#finish p{line-height:1.5;color:#73566e}#start h2,#finish h2{color:#9d174d;font-size:1.8rem;margin:8px 0}#finish strong{font-size:2.1rem;color:#831843}#best-line{margin-top:16px;color:#74566c;font-size:.9rem}.pill{background:#fce7f3;color:#9d174d;border-radius:100px;padding:6px 14px;font-weight:700;font-size:.9rem}.tip{font-size:.85rem;color:#8a7383;margin-top:18px}[hidden]{display:none!important}
+@media(max-width:500px){main{padding:18px 14px;border-radius:18px}.stage{padding:22px 10px;min-height:325px}.stats{gap:6px}.stat{padding:10px 2px}body{padding:12px 10px 30px}}
+</style>
+</head><body><main>
+<a class="back" href="addie.html">← Back to Chore Chart</a>
+<h1>🌟 Addie's Math Fun!</h1><p class="intro">Race the clock and become a multiplication master!</p>
+<div class="stats"><div class="stat"><b id="progress">0 / 12</b><small>Questions</small></div><div class="stat"><b id="timer">0:00.0</b><small>Time</small></div><div class="stat"><b id="mistakes">0</b><small>Tries again</small></div></div>
+<div class="track" role="progressbar" aria-label="Questions completed" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" id="track"><div id="fill"></div></div>
+<section class="stage" id="start"><span class="pill">12 multiplication questions</span><h2>Ready, Addie?</h2><p>Practice your 6s, 7s, 8s, and 9s.<br>Each fact appears both ways — like 9 × 7 and 7 × 9.</p><p>You have to get each answer right to move on. Your timer starts when you press Start!</p><button id="start-button" type="button">🚀 Start Challenge!</button></section>
+<section class="stage" id="playing" hidden><span class="pill" id="question-number">Question 1 of 12</span><div class="question" id="question" aria-live="polite">9 × 7 = ?</div><form id="answer-form" autocomplete="off"><label for="answer" class="tip">Type your answer</label><input id="answer" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-describedby="message" required><button type="submit" id="submit-button">Check Answer →</button></form><p id="message" role="status" aria-live="polite"></p></section>
+<section class="stage" id="finish" hidden><span class="pill">Challenge complete!</span><h2>🎉 Amazing job, Addie!</h2><p>You answered all 12 questions!</p><strong id="final-time">0:00.0</strong><p id="result-details"></p><p id="record" class="pill" hidden>🏆 New personal best!</p><button id="again" type="button">Play Again ↻</button></section>
+<p id="best-line">Personal best: Not yet — you can do it!</p>
+</main><script>
+'use strict';
+const FACTS=[[9,7],[6,8],[8,8],[9,8],[8,7],[7,7]];
+const BEST_KEY='addie-math-fun-best-v1';
+const $=id=>document.getElementById(id);
+let questions=[],position=0,wrong=0,started=0,elapsed=0,interval=null,running=false,locked=false;
+function makeQuestions(){const list=[];for(const [a,b] of FACTS){list.push([a,b],[b,a]);}for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list;}
+function formatTime(ms){const tenths=Math.floor(ms/100);return Math.floor(tenths/600)+':'+String(Math.floor((tenths%600)/10)).padStart(2,'0')+'.'+(tenths%10);}
+function best(){try{const value=Number(localStorage.getItem(BEST_KEY));return value>0&&Number.isFinite(value)?value:null;}catch{return null;}}
+function updateBestLabel(){const time=best();$('best-line').textContent='Personal best: '+(time===null?'Not yet — you can do it!':formatTime(time));}
+function updateStats(){$('progress').textContent=position+' / '+questions.length;$('mistakes').textContent=wrong;$('fill').style.width=(position/questions.length*100)+'%';$('track').setAttribute('aria-valuenow',String(position));}
+function clock(){elapsed=performance.now()-started;$('timer').textContent=formatTime(elapsed);}
+function showQuestion(){const [a,b]=questions[position];$('question-number').textContent='Question '+(position+1)+' of '+questions.length;$('question').textContent=a+' × '+b+' = ?';$('answer').value='';$('answer').classList.remove('wrong');$('message').className='';$('message').textContent='';locked=false;$('submit-button').disabled=false;$('answer').focus();}
+function startGame(){clearInterval(interval);questions=makeQuestions();position=0;wrong=0;elapsed=0;running=true;locked=false;$('timer').textContent='0:00.0';$('start').hidden=true;$('finish').hidden=true;$('playing').hidden=false;$('record').hidden=true;updateStats();started=performance.now();interval=setInterval(clock,50);showQuestion();}
+function finishGame(){running=false;clock();clearInterval(interval);$('playing').hidden=true;$('finish').hidden=false;$('final-time').textContent=formatTime(elapsed);$('result-details').textContent=wrong===0?'Perfect! No mistakes!':wrong+' extra '+(wrong===1?'try':'tries')+'. You kept going!';const previous=best();if(previous===null||elapsed<previous){try{localStorage.setItem(BEST_KEY,String(elapsed));}catch{}$('record').hidden=false;}updateBestLabel();}
+$('answer-form').addEventListener('submit',event=>{event.preventDefault();if(!running||locked)return;const raw=$('answer').value.trim();if(!/^\d+$/.test(raw))return;const [a,b]=questions[position];if(Number(raw)!==a*b){wrong++;updateStats();$('message').className='error';$('message').textContent='Not quite! Try again — you can do it!';$('answer').classList.remove('wrong');void $('answer').offsetWidth;$('answer').classList.add('wrong');$('answer').select();return;}locked=true;$('submit-button').disabled=true;position++;updateStats();$('message').className='';$('message').textContent='⭐ Correct! Nice work!';if(position===questions.length){finishGame();return;}window.setTimeout(()=>{if(running)showQuestion();},350);});
+$('start-button').addEventListener('click',startGame);$('again').addEventListener('click',startGame);updateBestLabel();
+</script></body></html>
