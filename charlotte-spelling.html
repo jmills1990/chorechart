@@ -39,6 +39,7 @@ button{border:0;border-radius:12px;background:#0f766e;color:white;padding:13px 2
 <audio id="word-audio" preload="auto"></audio>
 <p id="best-line">Personal best: Not yet — you can do it!</p>
 </main>
+<script>var AUDIO={};</script>
 <script src="audio/said.js"></script>
 <script src="audio/have.js"></script>
 <script src="audio/or.js"></script>
@@ -71,7 +72,6 @@ const WORDS=[
 {word:'zero',sentence:'Zero means none.'},
 {word:'purple',sentence:'The grape is purple.'}
 ];
-const AUDIO={};
 const BEST_KEY='charlotte-spelling-best-v1';
 const REPLAYS_KEY='charlotte-spelling-replays-total-v1';
 const $=id=>document.getElementById(id);
