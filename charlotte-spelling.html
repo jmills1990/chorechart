@@ -38,7 +38,22 @@ button{border:0;border-radius:12px;background:#0f766e;color:white;padding:13px 2
 <section class="stage" id="finish" hidden><span class="pill">Spelling complete!</span><h2>🎉 Amazing job, Charlotte!</h2><p>You spelled all 14 words!</p><strong id="final-time">0:00.0</strong><p id="result-details"></p><p id="record" class="pill" hidden>🏆 New personal best!</p><button id="again" type="button">Play Again ↻</button></section>
 <audio id="word-audio" preload="auto"></audio>
 <p id="best-line">Personal best: Not yet — you can do it!</p>
-</main><script>
+</main>
+<script src="audio/said.js"></script>
+<script src="audio/have.js"></script>
+<script src="audio/or.js"></script>
+<script src="audio/for.js"></script>
+<script src="audio/luck.js"></script>
+<script src="audio/duck.js"></script>
+<script src="audio/stuck.js"></script>
+<script src="audio/buck.js"></script>
+<script src="audio/lunch.js"></script>
+<script src="audio/bunch.js"></script>
+<script src="audio/punch.js"></script>
+<script src="audio/crunch.js"></script>
+<script src="audio/zero.js"></script>
+<script src="audio/purple.js"></script>
+<script>
 'use strict';
 const WORDS=[
 {word:'said',sentence:'She said hello.'},
@@ -56,6 +71,7 @@ const WORDS=[
 {word:'zero',sentence:'Zero means none.'},
 {word:'purple',sentence:'The grape is purple.'}
 ];
+const AUDIO={};
 const BEST_KEY='charlotte-spelling-best-v1';
 const REPLAYS_KEY='charlotte-spelling-replays-total-v1';
 const $=id=>document.getElementById(id);
@@ -68,13 +84,13 @@ function replayTotal(){try{const value=Number(localStorage.getItem(REPLAYS_KEY))
 function updateBestLabel(){const time=best();$('best-line').textContent='Personal best: '+(time===null?'Not yet — you can do it!':formatTime(time));}
 function updateStats(){$('progress').textContent=position+' / '+words.length;$('mistakes').textContent=wrong;$('replays').textContent=replaysUsed;$('fill').style.width=(position/words.length*100)+'%';$('track').setAttribute('aria-valuenow',String(position));}
 function clock(){elapsed=performance.now()-started;$('timer').textContent=formatTime(elapsed);}
-function playAudio(src){try{const a=$('word-audio');a.src=src;a.currentTime=0;const p=a.play();if(p)p.catch(()=>{});}catch{}}
-function speakWord(item){playAudio('audio/'+item.word+'.mp3');}
-function speakWordSlow(item){playAudio('audio/'+item.word+'-slow.mp3');}
+function playAudio(word,slow){try{const a=new Audio(AUDIO[word]);if(slow)a.playbackRate=0.55;const p=a.play();if(p)p.catch(()=>{});}catch{}}
+function speakWord(item){playAudio(item.word,false);}
+function speakWordSlow(item){playAudio(item.word,true);}
 function showWord(){const word=words[position];$('question-number').textContent='Word '+(position+1)+' of '+words.length;$('word-hint').innerHTML=word.word.split('').map(()=>'<span>_</span>').join('');$('answer').value='';$('answer').classList.remove('wrong');$('message').className='';$('message').textContent='';locked=false;questionStart=performance.now();qWrong=0;qReplays=0;speakWord(word);}
 function startGame(){clearInterval(interval);words=makeWords();position=0;wrong=0;replaysUsed=0;repeatCounts={};slowWords=[];elapsed=0;running=true;locked=false;$('timer').textContent='0:00.0';$('start').hidden=true;$('finish').hidden=true;$('playing').hidden=false;$('record').hidden=true;updateStats();started=performance.now();interval=setInterval(clock,50);showWord();}
 function finishGame(){running=false;clock();clearInterval(interval);$('playing').hidden=true;$('finish').hidden=false;$('final-time').textContent=formatTime(elapsed);const stillSlow=[...new Set(slowWords)];$('result-details').textContent=(wrong===0?'Perfect! No mistakes!':wrong+' extra '+(wrong===1?'try':'tries')+'. You kept going!')+(replaysUsed>0?' Replayed words '+replaysUsed+' '+(replaysUsed===1?'time':'times')+' ('+replayTotal()+' total).':' No replays needed!')+(stillSlow.length>0?' Still practicing: '+stillSlow.join(', ')+'.':'');const previous=best();if(previous===null||elapsed<previous){try{localStorage.setItem(BEST_KEY,String(elapsed));}catch{}$('record').hidden=false;}updateBestLabel();}
-function replay(){if(!running||locked)return;replaysUsed++;qReplays++;try{localStorage.setItem(REPLAYS_KEY,String(replayTotal()+1));}catch{}updateStats();$('replay-button').blur();playAudio('audio/'+words[position].word+'.mp3');}
+function replay(){if(!running||locked)return;replaysUsed++;qReplays++;try{localStorage.setItem(REPLAYS_KEY,String(replayTotal()+1));}catch{}updateStats();$('replay-button').blur();playAudio(words[position].word,false);}
 $('replay-button').addEventListener('click',replay);
 $('slow-button').addEventListener('click',()=>{if(!running||locked)return;$('slow-button').blur();speakWordSlow(words[position]);});
 // On-screen letter keyboard
