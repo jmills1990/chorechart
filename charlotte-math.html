@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Math Fun! | Charlotte</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px 16px 50px;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(160deg,#042f2e,#0f766e 45%,#115e59);color:#13312e}
+main{max-width:690px;margin:auto;background:#fff;border-radius:24px;padding:28px;box-shadow:0 24px 80px #0007;text-align:center}
+a.back{display:inline-block;float:left;color:#0f766e;font-size:.9rem;font-weight:700;text-decoration:none;padding:8px 2px}
+h1{clear:both;margin:18px 0 6px;color:#0f766e;font-size:clamp(2rem,6vw,2.8rem)}.intro{color:#5f6f6b;margin:0 0 24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}.stat{background:#f0fdfa;border:1px solid #99f6e4;border-radius:14px;padding:12px 5px}.stat b{display:block;color:#115e59;font-size:clamp(1.2rem,4vw,1.65rem);font-variant-numeric:tabular-nums}.stat small{font-size:.8rem;color:#5f6f6b}
+.track{background:#ccfbf1;border-radius:100px;height:13px;overflow:hidden;margin:12px 0 24px}#fill{width:0;height:100%;background:linear-gradient(90deg,#2dd4bf,#14b8a6,#f59e0b);transition:width .25s}
+.stage{background:linear-gradient(145deg,#f0fdfa,#ecfdf5);border:2px solid #99f6e4;border-radius:22px;padding:20px 15px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.question{font-size:clamp(2.6rem,9vw,4rem);font-weight:800;letter-spacing:-.05em;color:#134e4a;margin:8px 0 12px}
+input{display:block;width:200px;max-width:100%;padding:8px;text-align:center;font:700 2.2rem 'Segoe UI',sans-serif;border:3px solid #5eead4;border-radius:15px;outline:none;background:white;color:#134e4a}input:focus{border-color:#0f766e;box-shadow:0 0 0 4px #ccfbf1}input.wrong{border-color:#ef4444;animation:shake .25s}@keyframes shake{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:320px;margin-top:14px}
+.keypad button{margin:0;padding:14px 0;font-size:1.6rem;background:#ccfbf1;color:#134e4a;border:2px solid #99f6e4}
+.keypad button:active{background:#5eead4}
+.keypad button.check{background:#0f766e;color:#fff;border-color:#0f766e;font-size:1.4rem}
+.keypad button.check:disabled{opacity:.5}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:320px;margin-top:14px}
+.choices button{margin:0;padding:16px 0;font-size:1.5rem;background:#fff;color:#134e4a;border:2px solid #5eead4}
+.choices button.wrong-choice{background:#fee2e2;border-color:#ef4444;color:#b91c1c}
+.choices button:disabled{opacity:.6}
+button{border:0;border-radius:12px;background:#0f766e;color:white;padding:13px 28px;font:700 1.05rem 'Segoe UI',sans-serif;cursor:pointer;margin-top:16px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}button:hover{background:#115e59}button:focus-visible,a:focus-visible{outline:3px solid #f59e0b;outline-offset:3px}button:disabled{opacity:.5;cursor:default}
+.keypad button:focus,.choices button:focus{outline:none;background:#ccfbf1}
+.keypad button.check:focus{background:#0f766e}
+.choices button:focus{background:#fff}
+#message{min-height:26px;color:#0f766e;font-weight:700;margin:15px 0 0}#message.error{color:#b91c1c}#start p,#finish p{line-height:1.5;color:#5f6f6b}#start h2,#finish h2{color:#115e59;font-size:1.8rem;margin:8px 0}#finish strong{font-size:2.1rem;color:#134e4a}#best-line{margin-top:16px;color:#5f6f6b;font-size:.9rem}.pill{background:#ccfbf1;color:#115e59;border-radius:100px;padding:6px 14px;font-weight:700;font-size:.9rem}.tip{font-size:.85rem;color:#6b7f7a;margin-top:18px}[hidden]{display:none!important}
+@media(max-width:500px){main{padding:18px 14px;border-radius:18px}.stage{padding:16px 10px}.stats{gap:6px}.stat{padding:10px 2px}body{padding:12px 10px 30px}}
+</style>
+</head><body><main>
+<a class="back" href="charlotte.html">← Back to Chore Chart</a>
+<h1>🌟 Charlotte's Math Fun!</h1><p class="intro">Race the clock and become a doubles master!</p>
+<div class="stats"><div class="stat"><b id="progress">0 / 10</b><small>Questions</small></div><div class="stat"><b id="timer">0:00.0</b><small>Time</small></div><div class="stat"><b id="mistakes">0</b><small>Tries again</small></div><div class="stat"><b id="hints">0</b><small>Hints</small></div></div>
+<div class="track" role="progressbar" aria-label="Questions completed" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="track"><div id="fill"></div></div>
+<section class="stage" id="start"><span class="pill">10 doubles questions</span><h2>Ready, Charlotte?</h2><p>Practice your doubles, 1 + 1 all the way to 10 + 10, in a random order.</p><p>You have to get each answer right to move on. Your timer starts when you press Start!</p><button id="start-button" type="button">🚀 Start Challenge!</button></section>
+<section class="stage" id="playing" hidden><span class="pill" id="question-number">Question 1 of 10</span><div class="question" id="question" aria-live="polite">1 + 1 = ?</div><form id="answer-form" autocomplete="off"><label for="answer" class="tip">Tap the numbers below</label><input id="answer" type="text" inputmode="none" pattern="[0-9]*" maxlength="3" aria-describedby="message" readonly required><div class="keypad"><button type="button" data-digit="1">1</button><button type="button" data-digit="2">2</button><button type="button" data-digit="3">3</button><button type="button" data-digit="4">4</button><button type="button" data-digit="5">5</button><button type="button" data-digit="6">6</button><button type="button" data-digit="7">7</button><button type="button" data-digit="8">8</button><button type="button" data-digit="9">9</button><button type="button" id="clear-button" aria-label="Delete last digit">⌫</button><button type="button" data-digit="0">0</button><button type="submit" id="submit-button" class="check">✓ Check</button></div></form><button type="button" id="hint-button" style="background:#ccfbf1;color:#115e59;border:2px solid #5eead4;margin-top:14px">💡 Need a hint?</button><div id="choices" hidden><p class="tip">Pick one:</p><div class="choices" id="choice-buttons"></div></div><p id="message" role="status" aria-live="polite"></p></section>
+<section class="stage" id="finish" hidden><span class="pill">Challenge complete!</span><h2>🎉 Amazing job, Charlotte!</h2><p>You answered all 10 questions!</p><strong id="final-time">0:00.0</strong><p id="result-details"></p><p id="record" class="pill" hidden>🏆 New personal best!</p><button id="again" type="button">Play Again ↻</button></section>
+<p id="best-line">Personal best: Not yet — you can do it!</p>
+</main><script>
+'use strict';
+const FACTS=[[1,1],[2,2],[3,3],[4,4],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10]];
+const BEST_KEY='charlotte-doubles-best-v1';
+const HINTS_KEY='charlotte-doubles-hints-total-v1';
+const $=id=>document.getElementById(id);
+let questions=[],position=0,wrong=0,started=0,elapsed=0,interval=null,running=false,locked=false,hintTimer=null,hintsShown=0,hintsUsed=0;
+function hintTotal(){try{const value=Number(localStorage.getItem(HINTS_KEY));return value>0&&Number.isFinite(value)?value:0;}catch{return 0;}}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function showChoices(){if(!running||locked||!$('choices').hidden)return;clearTimeout(hintTimer);hintsShown++;const [a,b]=questions[position];const correct=a+b;const pool=shuffle([correct+10,correct-10,correct+5,correct-5,correct+2,correct-2,correct+1,correct-1,(a+1)+(b+1),(a-1)+(b-1)]).filter(v=>v>0&&v!==correct);const options=shuffle([correct,...[...new Set(pool)].slice(0,3)]);const box=$('choice-buttons');box.innerHTML='';options.forEach(value=>{const btn=document.createElement('button');btn.type='button';btn.textContent=value;btn.addEventListener('click',()=>{btn.blur();if(!running||locked)return;hintsUsed++;try{localStorage.setItem(HINTS_KEY,String(hintTotal()+1));}catch{}updateStats();$('answer').value=String(value);if(value!==correct){btn.disabled=true;btn.classList.add('wrong-choice');}$('answer-form').requestSubmit();});box.appendChild(btn);});$('choices').hidden=false;$('hint-button').hidden=true;}
+function makeQuestions(){return shuffle(FACTS.slice());}
+function formatTime(ms){const tenths=Math.floor(ms/100);return Math.floor(tenths/600)+':'+String(Math.floor((tenths%600)/10)).padStart(2,'0')+'.'+(tenths%10);}
+function best(){try{const value=Number(localStorage.getItem(BEST_KEY));return value>0&&Number.isFinite(value)?value:null;}catch{return null;}}
+function updateBestLabel(){const time=best();$('best-line').textContent='Personal best: '+(time===null?'Not yet — you can do it!':formatTime(time));}
+function updateStats(){$('progress').textContent=position+' / '+questions.length;$('mistakes').textContent=wrong;$('hints').textContent=hintsUsed;$('fill').style.width=(position/questions.length*100)+'%';$('track').setAttribute('aria-valuenow',String(position));}
+function clock(){elapsed=performance.now()-started;$('timer').textContent=formatTime(elapsed);}
+function showQuestion(){const [a,b]=questions[position];$('question-number').textContent='Question '+(position+1)+' of '+questions.length;$('question').textContent=a+' + '+b+' = ?';$('answer').value='';$('answer').classList.remove('wrong');$('message').className='';$('message').textContent='';locked=false;$('submit-button').disabled=false;clearTimeout(hintTimer);$('choices').hidden=true;$('hint-button').hidden=false;$('choice-buttons').innerHTML='';hintTimer=setTimeout(showChoices,15000);}
+function startGame(){clearInterval(interval);clearTimeout(hintTimer);questions=makeQuestions();position=0;wrong=0;hintsShown=0;hintsUsed=0;elapsed=0;running=true;locked=false;$('timer').textContent='0:00.0';$('start').hidden=true;$('finish').hidden=true;$('playing').hidden=false;$('record').hidden=true;updateStats();started=performance.now();interval=setInterval(clock,50);showQuestion();}
+function finishGame(){running=false;clock();clearInterval(interval);clearTimeout(hintTimer);$('playing').hidden=true;$('finish').hidden=false;$('final-time').textContent=formatTime(elapsed);$('result-details').textContent=(wrong===0?'Perfect! No mistakes!':wrong+' extra '+(wrong===1?'try':'tries')+'. You kept going!')+(hintsShown>0?' Needed a hint on '+hintsShown+' '+(hintsShown===1?'question':'questions')+', used multiple choice '+hintsUsed+' '+(hintsUsed===1?'time':'times')+' ('+hintTotal()+' total).':' No hints needed!');const previous=best();if(previous===null||elapsed<previous){try{localStorage.setItem(BEST_KEY,String(elapsed));}catch{}$('record').hidden=false;}updateBestLabel();}
+document.querySelectorAll('[data-digit]').forEach(btn=>btn.addEventListener('click',()=>{btn.blur();if(!running||locked)return;const input=$('answer');if(input.value.length<3)input.value+=btn.dataset.digit;}));
+$('hint-button').addEventListener('click',()=>{$('hint-button').blur();showChoices();});
+$('clear-button').addEventListener('click',()=>{$('clear-button').blur();if(!running||locked)return;$('answer').value=$('answer').value.slice(0,-1);});
+$('answer-form').addEventListener('submit',event=>{event.preventDefault();$('submit-button').blur();if(!running||locked)return;const raw=$('answer').value.trim();if(!/^\d+$/.test(raw))return;const [a,b]=questions[position];if(Number(raw)!==a+b){wrong++;updateStats();$('message').className='error';$('message').textContent='Not quite! Try again — you can do it!';$('answer').classList.remove('wrong');void $('answer').offsetWidth;$('answer').classList.add('wrong');return;}locked=true;$('submit-button').disabled=true;position++;updateStats();$('message').className='';$('message').textContent='⭐ Correct! Nice work!';if(position===questions.length){finishGame();return;}window.setTimeout(()=>{if(running)showQuestion();},350);});
+$('start-button').addEventListener('click',startGame);$('again').addEventListener('click',startGame);updateBestLabel();
+</script></body></html>
