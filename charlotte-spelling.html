@@ -31,46 +31,42 @@ button{border:0;border-radius:12px;background:#0f766e;color:white;padding:13px 2
 </head><body><main>
 <a class="back" href="charlotte.html">← Back to Chore Chart</a>
 <h1>🐱 Charlotte's Spelling Fun!</h1><p class="intro">Listen to the word, then spell it!</p>
-<div class="stats"><div class="stat"><b id="progress">0 / 14</b><small>Words</small></div><div class="stat"><b id="timer">0:00.0</b><small>Time</small></div><div class="stat"><b id="mistakes">0</b><small>Tries again</small></div><div class="stat"><b id="replays">0</b><small>Replays</small></div></div>
-<div class="track" role="progressbar" aria-label="Words completed" aria-valuemin="0" aria-valuemax="14" aria-valuenow="0" id="track"><div id="fill"></div></div>
-<section class="stage" id="start"><span class="pill">14 spelling words</span><h2>Ready, Charlotte?</h2><p>Spelling words, word family words, and bonus words for this week.<br>Listen carefully — you can hear each word again as many times as you want!</p><p>Words you get fast move on. Words you miss or replay a lot come back at the end until they're easy! Your timer starts when you press Start!</p><button id="start-button" type="button">🚀 Start Spelling!</button></section>
-<section class="stage" id="playing" hidden><span class="pill" id="question-number">Word 1 of 14</span><div class="word-hint" id="word-hint" aria-label="Word length"></div><div><button type="button" class="replay-btn" id="replay-button">🔊 Hear it again</button> <button type="button" class="replay-btn" id="slow-button">🐢 Say it slowly</button></div><form id="answer-form" autocomplete="off"><label for="answer" class="tip">Type what you hear</label><input id="answer" type="text" inputmode="none" maxlength="10" aria-describedby="message" readonly required><div class="keyboard" id="keyboard"></div></form><p id="message" role="status" aria-live="polite"></p></section>
-<section class="stage" id="finish" hidden><span class="pill">Spelling complete!</span><h2>🎉 Amazing job, Charlotte!</h2><p>You spelled all 14 words!</p><strong id="final-time">0:00.0</strong><p id="result-details"></p><p id="record" class="pill" hidden>🏆 New personal best!</p><button id="again" type="button">Play Again ↻</button></section>
+<div class="stats"><div class="stat"><b id="progress">0 / 12</b><small>Words</small></div><div class="stat"><b id="timer">0:00.0</b><small>Time</small></div><div class="stat"><b id="mistakes">0</b><small>Tries again</small></div><div class="stat"><b id="replays">0</b><small>Replays</small></div></div>
+<div class="track" role="progressbar" aria-label="Words completed" aria-valuemin="0" aria-valuemax="12" aria-valuenow="0" id="track"><div id="fill"></div></div>
+<section class="stage" id="start"><span class="pill">12 spelling words</span><h2>Ready, Charlotte?</h2><p>Spelling words and word family words for this week.<br>Listen carefully — you can hear each word again as many times as you want!</p><p>Words you get fast move on. Words you miss or replay a lot come back at the end until they're easy! Your timer starts when you press Start!</p><button id="start-button" type="button">🚀 Start Spelling!</button></section>
+<section class="stage" id="playing" hidden><span class="pill" id="question-number">Word 1 of 12</span><div class="word-hint" id="word-hint" aria-label="Word length"></div><div><button type="button" class="replay-btn" id="replay-button">🔊 Hear it again</button> <button type="button" class="replay-btn" id="slow-button">🐢 Say it slowly</button></div><form id="answer-form" autocomplete="off"><label for="answer" class="tip">Type what you hear</label><input id="answer" type="text" inputmode="none" maxlength="10" aria-describedby="message" readonly required><div class="keyboard" id="keyboard"></div></form><p id="message" role="status" aria-live="polite"></p></section>
+<section class="stage" id="finish" hidden><span class="pill">Spelling complete!</span><h2>🎉 Amazing job, Charlotte!</h2><p>You spelled all 12 words!</p><strong id="final-time">0:00.0</strong><p id="result-details"></p><p id="record" class="pill" hidden>🏆 New personal best!</p><button id="again" type="button">Play Again ↻</button></section>
 <audio id="word-audio" preload="auto"></audio>
 <p id="best-line">Personal best: Not yet — you can do it!</p>
 </main>
 <script>var AUDIO={};</script>
-<script src="audio/said.js"></script>
-<script src="audio/have.js"></script>
-<script src="audio/or.js"></script>
-<script src="audio/for.js"></script>
-<script src="audio/luck.js"></script>
-<script src="audio/duck.js"></script>
-<script src="audio/stuck.js"></script>
-<script src="audio/buck.js"></script>
-<script src="audio/lunch.js"></script>
-<script src="audio/bunch.js"></script>
-<script src="audio/punch.js"></script>
-<script src="audio/crunch.js"></script>
-<script src="audio/zero.js"></script>
-<script src="audio/purple.js"></script>
+<script src="audio/when.js"></script>
+<script src="audio/then.js"></script>
+<script src="audio/that.js"></script>
+<script src="audio/this.js"></script>
+<script src="audio/lick.js"></script>
+<script src="audio/sick.js"></script>
+<script src="audio/pick.js"></script>
+<script src="audio/thick.js"></script>
+<script src="audio/sock.js"></script>
+<script src="audio/rock.js"></script>
+<script src="audio/block.js"></script>
+<script src="audio/shock.js"></script>
 <script>
 'use strict';
 const WORDS=[
-{word:'said',sentence:'She said hello.'},
-{word:'have',sentence:'I have a red ball.'},
-{word:'or',sentence:'Do you want milk or juice?'},
-{word:'for',sentence:'This gift is for you.'},
-{word:'luck',sentence:'Good luck on your test!'},
-{word:'duck',sentence:'The duck swims in the pond.'},
-{word:'stuck',sentence:'My shoe is stuck in the mud.'},
-{word:'buck',sentence:'The deer is a buck.'},
-{word:'lunch',sentence:'We eat lunch at noon.'},
-{word:'bunch',sentence:'I picked a bunch of flowers.'},
-{word:'punch',sentence:'He can punch the balloon.'},
-{word:'crunch',sentence:'I like to crunch the leaves.'},
-{word:'zero',sentence:'Zero means none.'},
-{word:'purple',sentence:'The grape is purple.'}
+{word:'when',sentence:'When will we go to the park?'},
+{word:'then',sentence:'Then we went home.'},
+{word:'that',sentence:'That dog is big.'},
+{word:'this',sentence:'This book is fun.'},
+{word:'lick',sentence:'The dog will lick the bowl.'},
+{word:'sick',sentence:'I feel sick today.'},
+{word:'pick',sentence:'Pick a red apple.'},
+{word:'thick',sentence:'The book is thick.'},
+{word:'sock',sentence:'I lost my sock.'},
+{word:'rock',sentence:'The rock is heavy.'},
+{word:'block',sentence:'Stack the block on top.'},
+{word:'shock',sentence:'What a shock!'}
 ];
 const BEST_KEY='charlotte-spelling-best-v1';
 const REPLAYS_KEY='charlotte-spelling-replays-total-v1';
